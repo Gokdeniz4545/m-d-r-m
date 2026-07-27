@@ -2,10 +2,8 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
-import { getCloudStatus } from "@/lib/wa-cloud-actions";
-import { WhatsAppEmbedded } from "./whatsapp-embedded";
-import { CloudControls } from "./cloud-controls";
-import { ManualCloud } from "./manual-cloud";
+import { getWaStatus } from "@/lib/wa-actions";
+import { WhatsAppConnect } from "./whatsapp-connect";
 
 const STATUS_LABEL: Record<string, string> = {
   queued: "Kuyrukta",
@@ -17,7 +15,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function WhatsAppPage() {
   const profile = await requireRole(["org_admin"]);
-  const status = await getCloudStatus();
+  const initial = await getWaStatus();
 
   const supabase = await createClient();
   const { data: recent } = await supabase
@@ -44,25 +42,20 @@ export default async function WhatsAppPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="max-w-md">
-          {status.connected ? (
-            <CloudControls displayPhone={status.displayPhone} />
-          ) : (
-            <div className="flex flex-col gap-4">
-              <WhatsAppEmbedded />
-              <ManualCloud />
-            </div>
-          )}
+          <WhatsAppConnect initial={initial} />
         </div>
 
         <div className="card p-5 text-sm text-muted">
-          <h3 className="mb-2 font-semibold text-foreground">Resmi WhatsApp API</h3>
-          <p>
-            Kurumun kendi WhatsApp Business numarasını Meta&apos;nın resmi akışıyla
-            bağlar. Banlanma riski yoktur, sunucu (worker) gerekmez.
-          </p>
-          <p className="mt-2 text-xs">
-            Not: Gerçek müşterilere hatırlatma için Meta işletme doğrulaması ve
-            şablon onayı gerekir (bir defalık kurulum).
+          <h3 className="mb-2 font-semibold text-foreground">Nasıl çalışır?</h3>
+          <ol className="list-decimal space-y-1.5 pl-4">
+            <li>&quot;WhatsApp bağla&quot; ile QR kodu oluştur.</li>
+            <li>Kurumun telefonundan QR&apos;ı okut (Bağlı cihazlar).</li>
+            <li>Bağlandıktan sonra hatırlatmalar bu numaradan gider.</li>
+          </ol>
+          <p className="mt-3 text-xs">
+            Not: Bu yöntem kurumun kendi WhatsApp numarasını kullanır. Yoğun/otomatik
+            gönderimde WhatsApp&apos;ın numarayı kısıtlama riski vardır; hatırlatmalar
+            makul aralıklarla gönderilir.
           </p>
         </div>
       </div>
@@ -71,10 +64,7 @@ export default async function WhatsAppPage() {
       {recent && recent.length > 0 ? (
         <div className="card divide-y divide-border">
           {recent.map((n) => (
-            <div
-              key={n.id}
-              className="flex items-start justify-between gap-3 px-4 py-3 text-sm"
-            >
+            <div key={n.id} className="flex items-start justify-between gap-3 px-4 py-3 text-sm">
               <div className="min-w-0">
                 <div className="tabular text-xs text-muted">{n.to_number ?? "—"}</div>
                 <div className="truncate text-foreground">{n.body}</div>
