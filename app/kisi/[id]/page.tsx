@@ -20,6 +20,7 @@ import { TeacherCompensationForm } from "@/components/teacher-compensation-form"
 import { addTeacherSubject, removeTeacherSubject } from "@/lib/class-actions";
 import { renderTemplate } from "@/lib/render-template";
 import { SendMessage } from "./send-message";
+import { Section } from "@/components/collapsible-section";
 
 export default async function KisiProfil({
   params,
@@ -361,12 +362,13 @@ export default async function KisiProfil({
         </div>
       </div>
 
-      <h2 className="section-title mb-3">
-        {person.role === "teacher" ? "Verdiği dersler" : "Aldığı dersler"} (
-        {classes.length})
-      </h2>
+      <Section
+        title={person.role === "teacher" ? "Verdiği dersler" : "Aldığı dersler"}
+        count={classes.length}
+        defaultOpen
+      >
       {classes.length > 0 ? (
-        <div className="mb-6 flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           {classes.map((c) => (
             <div key={c.id} className="card p-3">
               <div className="flex items-center justify-between">
@@ -408,16 +410,17 @@ export default async function KisiProfil({
           ))}
         </div>
       ) : (
-        <p className="mb-6 text-sm text-muted">Ders kaydı yok.</p>
+        <p className="text-sm text-muted">Ders kaydı yok.</p>
       )}
+      </Section>
 
       {person.role === "teacher" ? (
         <>
           {showComp ? (
-            <>
-              <h2 className="section-title mb-3">
-                Verebileceği branşlar ({teacherSubjects.length})
-              </h2>
+            <Section
+              title="Verebileceği branşlar"
+              count={teacherSubjects.length}
+            >
               <div className="mb-3 flex flex-wrap gap-2">
                 {teacherSubjects.length > 0 ? (
                   teacherSubjects.map((s) => (
@@ -444,7 +447,7 @@ export default async function KisiProfil({
                 )}
               </div>
               {subjectCandidates.length > 0 ? (
-                <form action={addTeacherSubject} className="mb-6 flex items-end gap-2">
+                <form action={addTeacherSubject} className="flex items-end gap-2">
                   <input type="hidden" name="teacherId" value={person.id} />
                   <label className="label">
                     Branş ekle
@@ -464,22 +467,22 @@ export default async function KisiProfil({
                   </button>
                 </form>
               ) : null}
-            </>
+            </Section>
           ) : null}
 
-          <h2 className="section-title mb-3">Ders durumu</h2>
-          <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div className="card p-4">
-              <div className="text-sm text-muted">Bu ay verilen ders</div>
-              <div className="tabular mt-1 text-2xl font-bold">
-                {teacherMonthlyCount}
+          <Section title="Ders durumu">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <div className="card p-4">
+                <div className="text-sm text-muted">Bu ay verilen ders</div>
+                <div className="tabular mt-1 text-2xl font-bold">
+                  {teacherMonthlyCount}
+                </div>
               </div>
             </div>
-          </div>
+          </Section>
 
           {showComp && earning ? (
-            <>
-              <h2 className="section-title mb-3">Hakediş</h2>
+            <Section title="Hakediş">
               <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <div className="card p-4">
                   <div className="text-sm text-muted">Ücret tipi</div>
@@ -511,21 +514,19 @@ export default async function KisiProfil({
                 </div>
               </div>
 
-              <div className="card mb-6 p-5">
+              <div className="card p-5">
                 <h3 className="mb-3 font-semibold">Hakediş ayarı</h3>
                 <TeacherCompensationForm
                   teacherId={person.id}
                   comp={earning.comp}
                 />
               </div>
-            </>
+            </Section>
           ) : null}
 
-          <h3 className="mb-2 font-semibold">
-            Ders geçmişi ({teacherHistory.length})
-          </h3>
+          <Section title="Ders geçmişi" count={teacherHistory.length}>
           {teacherHistory.length > 0 ? (
-            <div className="mb-6 flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
               {teacherHistory.map((h) => (
                 <div
                   key={h.id}
@@ -537,24 +538,19 @@ export default async function KisiProfil({
               ))}
             </div>
           ) : (
-            <p className="mb-6 text-sm text-muted">Geçmiş ders yok.</p>
+            <p className="text-sm text-muted">Geçmiş ders yok.</p>
           )}
+          </Section>
         </>
       ) : null}
 
       {showSalary ? (
-        <>
-          <h2 className="section-title mb-3">
-            Ödeme geçmişi — verilen (maaş / hakediş)
-          </h2>
-          <div className="card mb-3 p-5">
-            <div className="text-sm text-muted">Toplam ödenen</div>
-            <div className="tabular text-3xl font-bold tracking-tight">
-              {formatTRY(salaryTotal)}
-            </div>
-          </div>
+        <Section
+          title="Ödeme geçmişi — verilen (maaş / hakediş)"
+          hint={formatTRY(salaryTotal)}
+        >
           {salaryPayments.length > 0 ? (
-            <div className="card mb-6 divide-y divide-border">
+            <div className="card divide-y divide-border">
               {salaryPayments.map((p) => (
                 <div
                   key={p.id}
@@ -571,17 +567,16 @@ export default async function KisiProfil({
               ))}
             </div>
           ) : (
-            <p className="mb-6 text-sm text-muted">
+            <p className="text-sm text-muted">
               Henüz maaş ödemesi yok. Giderler sayfasından ekleyebilirsiniz.
             </p>
           )}
-        </>
+        </Section>
       ) : null}
 
       {showBilling && ledger ? (
         <>
-          <h2 className="section-title mb-3">Borç durumu</h2>
-          <div className="card mb-6 p-5">
+          <Section title="Borç durumu" defaultOpen>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <div className="text-sm text-muted">
@@ -668,10 +663,10 @@ export default async function KisiProfil({
                 })}
               </div>
             ) : null}
-          </div>
+          </Section>
 
-          <h2 className="section-title mb-3">Abonelik & ödeme</h2>
-          <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Section title="Abonelik & ödeme">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <div className="card p-4">
               <div className="text-sm text-muted">Aylık ücret</div>
               <div className="mt-1 text-2xl font-bold">
@@ -690,30 +685,28 @@ export default async function KisiProfil({
               <div className="text-sm text-muted">Kalan ders hakkı</div>
               <div className="mt-1 text-2xl font-bold">{remaining}</div>
             </div>
-          </div>
+            </div>
+          </Section>
 
-          <div className="card mb-4 p-5">
-            <h3 className="mb-3 font-semibold">Abonelik bilgileri</h3>
+          <Section title="Abonelik bilgileri">
             <SubscriptionForm studentId={person.id} sub={sub} />
-          </div>
+          </Section>
 
-          <div className="card mb-4 p-5">
-            <h3 className="mb-3 font-semibold">Ödeme al</h3>
+          <Section title="Ödeme al">
             <PaymentForm
               studentId={person.id}
               defaultAmount={sub ? String(Number(sub.monthly_fee)) : ""}
               defaultPeriod={currentPeriod}
             />
-          </div>
+          </Section>
 
-          <h3 className="mb-2 font-semibold">Mesaj gönder</h3>
-          <div className="mb-6">
+          <Section title="Mesaj gönder">
             <SendMessage studentId={person.id} templates={messageTemplates} />
-          </div>
+          </Section>
 
-          <h3 className="mb-2 font-semibold">Ödeme geçmişi ({payments.length})</h3>
+          <Section title="Ödeme geçmişi" count={payments.length}>
           {payments.length > 0 ? (
-            <div className="mb-6 flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
               {payments.map((p) => (
                 <div
                   key={p.id}
@@ -741,14 +734,14 @@ export default async function KisiProfil({
               ))}
             </div>
           ) : (
-            <p className="mb-6 text-sm text-muted">Henüz ödeme yok.</p>
+            <p className="text-sm text-muted">Henüz ödeme yok.</p>
           )}
+          </Section>
         </>
       ) : null}
 
       {canManage ? (
-        <>
-          <h2 className="section-title mb-3">Yönetim</h2>
+        <Section title="Yönetim">
           <UserManageRow
             user={{
               id: person.id,
@@ -759,7 +752,7 @@ export default async function KisiProfil({
             }}
             branchesText={branchNames.join(", ")}
           />
-        </>
+        </Section>
       ) : null}
     </PanelShell>
   );
