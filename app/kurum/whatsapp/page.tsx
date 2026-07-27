@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
 import { getWaStatus } from "@/lib/wa-actions";
 import { WhatsAppConnect } from "./whatsapp-connect";
+import { MessageTemplates } from "./message-templates";
 
 const STATUS_LABEL: Record<string, string> = {
   queued: "Kuyrukta",
@@ -23,6 +24,10 @@ export default async function WhatsAppPage() {
     .select("id, to_number, body, status, error, sent_at, created_at")
     .order("created_at", { ascending: false })
     .limit(20);
+  const { data: templates } = await supabase
+    .from("message_templates")
+    .select("id, name, body")
+    .order("created_at", { ascending: true });
   const fmt = (d: string) =>
     new Date(d).toLocaleString("tr-TR", {
       day: "2-digit",
@@ -59,6 +64,13 @@ export default async function WhatsAppPage() {
           </p>
         </div>
       </div>
+
+      <h2 className="section-title mb-3 mt-8">Mesaj türleri (şablonlar)</h2>
+      <p className="mb-3 text-sm text-muted">
+        Öğrenci profillerinden bu türlerle mesaj gönderilir. Metni özelleştir, yeni
+        tür ekle.
+      </p>
+      <MessageTemplates templates={templates ?? []} />
 
       <h2 className="section-title mb-3 mt-8">Gönderim geçmişi</h2>
       {recent && recent.length > 0 ? (

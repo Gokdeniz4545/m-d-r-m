@@ -18,6 +18,8 @@ import { getStudentUsedThisMonth, getStudentLedger, formatTRY } from "@/lib/bill
 import { getTeacherEarningThisMonth, COMP_TYPE_LABEL } from "@/lib/compensation";
 import { TeacherCompensationForm } from "@/components/teacher-compensation-form";
 import { addTeacherSubject, removeTeacherSubject } from "@/lib/class-actions";
+import { renderTemplate } from "@/lib/render-template";
+import { SendMessage } from "./send-message";
 
 export default async function KisiProfil({
   params,
@@ -264,6 +266,33 @@ export default async function KisiProfil({
     creditsUsed = await getStudentUsedThisMonth(id);
   }
   const ledger = showBilling ? await getStudentLedger(id) : null;
+
+  // Öğrenci profilinden WhatsApp mesajı için hazır şablonlar (kurumun türleri).
+  let messageTemplates: { id: string; name: string; rendered: string }[] = [];
+  if (showBilling && ledger) {
+    const { data: tpls } = await supabase
+      .from("message_templates")
+      .select("id, name, body")
+      .order("created_at", { ascending: true });
+    const { data: orgRow } = await supabase
+      .from("organizations")
+      .select("name")
+      .limit(1)
+      .maybeSingle();
+    const vars = {
+      ogrenci: person.full_name ?? person.username ?? "",
+      veli: person.guardian_name ?? "",
+      bakiye: formatTRY(Math.max(0, ledger.balance)),
+      ay: String(ledger.unpaidDueCount),
+      kurum: orgRow?.name ?? "",
+    };
+    messageTemplates = (tpls ?? []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      rendered: renderTemplate(t.body, vars),
+    }));
+  }
+
   const monthLabel = (period: string) => {
     const [y, m] = period.split("-").map(Number);
     return new Date(y, m - 1, 1).toLocaleDateString("tr-TR", {
@@ -675,6 +704,11 @@ export default async function KisiProfil({
               defaultAmount={sub ? String(Number(sub.monthly_fee)) : ""}
               defaultPeriod={currentPeriod}
             />
+          </div>
+
+          <h3 className="mb-2 font-semibold">Mesaj gönder</h3>
+          <div className="mb-6">
+            <SendMessage studentId={person.id} templates={messageTemplates} />
           </div>
 
           <h3 className="mb-2 font-semibold">Ödeme geçmişi ({payments.length})</h3>
