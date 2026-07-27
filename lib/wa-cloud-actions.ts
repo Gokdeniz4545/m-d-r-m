@@ -5,6 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   cloudConfigured,
   getOrgCloud,
+  saveOrgCloud,
+  registerPhone,
   sendTemplate,
 } from "@/lib/whatsapp-cloud";
 
@@ -30,6 +32,31 @@ export async function getCloudStatus(): Promise<CloudStatus> {
     connected: creds?.status === "connected",
     displayPhone: creds?.display_phone ?? null,
   };
+}
+
+// Test/manuel bağlama: Meta API Setup ekranındaki Phone Number ID + Token'ı
+// doğrudan yapıştır (Embedded Signup'a gerek kalmadan gönderim testi).
+export async function saveManualCloud(
+  _prev: { error: string | null; ok: boolean },
+  formData: FormData,
+): Promise<{ error: string | null; ok: boolean }> {
+  const p = await requireOrgAdmin();
+  if (!p) return { error: "Yetki yok.", ok: false };
+  const phoneNumberId = String(formData.get("phone_number_id") ?? "").trim();
+  const token = String(formData.get("access_token") ?? "").trim();
+  const displayPhone = String(formData.get("display_phone") ?? "").trim() || null;
+  const wabaId = String(formData.get("waba_id") ?? "").trim() || "manual";
+  if (!phoneNumberId || !token)
+    return { error: "Phone Number ID ve Token gerekli.", ok: false };
+
+  await registerPhone(phoneNumberId, token).catch(() => null);
+  await saveOrgCloud(p.organization_id!, {
+    waba_id: wabaId,
+    phone_number_id: phoneNumberId,
+    display_phone: displayPhone,
+    access_token: token,
+  });
+  return { error: null, ok: true };
 }
 
 export async function disconnectCloud(): Promise<void> {

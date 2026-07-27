@@ -5,6 +5,7 @@ import { PanelShell } from "@/components/panel-shell";
 import { getCloudStatus } from "@/lib/wa-cloud-actions";
 import { WhatsAppEmbedded } from "./whatsapp-embedded";
 import { CloudControls } from "./cloud-controls";
+import { ManualCloud } from "./manual-cloud";
 
 const STATUS_LABEL: Record<string, string> = {
   queued: "Kuyrukta",
@@ -46,7 +47,10 @@ export default async function WhatsAppPage() {
           {status.connected ? (
             <CloudControls displayPhone={status.displayPhone} />
           ) : (
-            <WhatsAppEmbedded />
+            <div className="flex flex-col gap-4">
+              <WhatsAppEmbedded />
+              <ManualCloud />
+            </div>
           )}
         </div>
 
