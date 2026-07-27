@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { createAppUser } from "@/lib/user-admin";
-import type { UserRole } from "@/lib/roles";
+import { createAppUser, autoCredentials } from "@/lib/user-admin";
+import { NON_LOGIN_ROLES, type UserRole } from "@/lib/roles";
 
 type State = { error: string | null; ok: boolean };
 
@@ -58,12 +58,12 @@ export async function createOrgUser(
     return { error: "Şube seçilmeli.", ok: false };
   }
 
-  // Personel giriş yapmaz; kimlik otomatik üretilir (sadece maaş kaydı için).
+  // Öğrenci/öğretmen/personel giriş yapmaz; kimlik otomatik üretilir.
+  // Sadece yöneticiler (branch_admin) kullanıcı adı/şifre girer.
   let username = String(formData.get("username") ?? "").trim();
   let password = String(formData.get("password") ?? "");
-  if (role === "staff") {
-    username = "personel." + crypto.randomUUID().replace(/-/g, "").slice(0, 10);
-    password = crypto.randomUUID().replace(/-/g, "");
+  if (NON_LOGIN_ROLES.includes(role)) {
+    ({ username, password } = autoCredentials(role));
   }
 
   // Seçilen şube gerçekten bu kuruma mı ait? (RLS zaten kısıtlar, çift kontrol)

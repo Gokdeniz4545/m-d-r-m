@@ -80,14 +80,10 @@ export function CreateBranchUserForm({ branches }: { branches: Branch[] }) {
               <Field label="Veli telefonu (WhatsApp)" name="guardianPhone" type="tel" placeholder="05xx xxx xx xx" />
             </>
           ) : null}
-          <Field label="Kullanıcı adı" name="username" required autoComplete="off" />
-          <Field
-            label="Şifre"
-            name="password"
-            type="password"
-            required
-            autoComplete="new-password"
-          />
+          <p className="text-xs text-muted">
+            {role === "student" ? "Öğrenci" : "Öğretmen"} giriş yapmaz; kullanıcı
+            adı/şifre gerekmez.
+          </p>
           <label className="flex items-start gap-2.5 text-sm">
             <input type="checkbox" name="notifyConsent" defaultChecked className="mt-0.5 h-4 w-4 accent-primary" />
             <span className="text-muted">Bildirim (WhatsApp/SMS/e-posta) onayı var (KVKK).</span>

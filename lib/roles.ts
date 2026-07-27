@@ -19,6 +19,10 @@ export type Profile = {
   created_at: string;
 };
 
+// Giriş yapmayan roller — kimlik/şifre otomatik üretilir, giriş bilgisi istenmez.
+// (ŞİMDİLİK: öğrenci, öğretmen, personel sisteme girmiyor; sadece yöneticiler girer.)
+export const NON_LOGIN_ROLES: readonly UserRole[] = ["student", "teacher", "staff"];
+
 // Supabase Auth e-posta beklediği için kullanıcı adını sahte bir adrese eşleriz.
 // Hiç e-posta gönderilmez; hesaplar sunucu tarafında otomatik onaylanır.
 export const SYNTHETIC_EMAIL_DOMAIN = "okul-takip.app";

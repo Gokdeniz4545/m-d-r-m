@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createAppUser } from "@/lib/user-admin";
+import { createAppUser, autoCredentials } from "@/lib/user-admin";
 
 type State = { error: string | null; ok: boolean; studentId?: string };
 
@@ -32,8 +32,8 @@ export async function registerStudent(
 
   const branchId = String(formData.get("branchId") ?? "");
   const fullName = String(formData.get("fullName") ?? "").trim();
-  const username = String(formData.get("username") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  // Öğrenci giriş yapmaz — kimlik otomatik üretilir.
+  const { username, password } = autoCredentials("student");
   const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const guardianName = String(formData.get("guardianName") ?? "").trim();

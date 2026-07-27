@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { createAppUser } from "@/lib/user-admin";
+import { createAppUser, autoCredentials } from "@/lib/user-admin";
 import type { UserRole } from "@/lib/roles";
 
 type State = { error: string | null; ok: boolean };
@@ -25,8 +25,8 @@ export async function quickAddUser(
   if (!branchId) return { error: "Şube seçilmeli.", ok: false };
 
   const fullName = String(formData.get("fullName") ?? "").trim();
-  const username = String(formData.get("username") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  // Öğrenci/öğretmen giriş yapmaz — kimlik otomatik üretilir.
+  const { username, password } = autoCredentials(role);
   const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const notifyConsent = formData.get("notifyConsent") != null;

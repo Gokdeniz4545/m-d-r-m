@@ -60,14 +60,9 @@ export function RegistrationForm({
         <Field label="Ad soyad" name="fullName" required />
         <Field label="Telefon (WhatsApp için)" name="phone" type="tel" placeholder="05xx xxx xx xx" />
         <Field label="E-posta (isteğe bağlı)" name="email" type="email" />
-        <Field label="Kullanıcı adı" name="username" required autoComplete="off" />
-        <Field
-          label="Şifre"
-          name="password"
-          type="password"
-          required
-          autoComplete="new-password"
-        />
+        <p className="text-xs text-muted">
+          Öğrenci giriş yapmaz; kullanıcı adı/şifre gerekmez.
+        </p>
       </section>
 
       <section className="card flex flex-col gap-3 p-5">

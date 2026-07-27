@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { toggleActiveAction, resetPasswordAction } from "@/lib/manage-actions";
-import { ROLE_LABEL, type UserRole } from "@/lib/roles";
+import { ROLE_LABEL, NON_LOGIN_ROLES, type UserRole } from "@/lib/roles";
 
 type State = { error: string | null; ok: boolean };
 const initial: State = { error: null, ok: false };
@@ -25,6 +25,7 @@ export function UserManageRow({
   const [tState, tAction, tPending] = useActionState(toggleActiveAction, initial);
   const [pState, pAction, pPending] = useActionState(resetPasswordAction, initial);
   const [showPw, setShowPw] = useState(false);
+  const canLogin = !NON_LOGIN_ROLES.includes(user.role);
 
   const badge = user.is_active
     ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300"
@@ -37,10 +38,12 @@ export function UserManageRow({
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="font-medium text-zinc-900 dark:text-zinc-50">
-            {user.full_name ?? user.username}{" "}
-            <span className="text-sm font-normal text-zinc-500">
-              ({user.username})
-            </span>
+            {user.full_name ?? user.username}
+            {canLogin ? (
+              <span className="ml-1 text-sm font-normal text-zinc-500">
+                ({user.username})
+              </span>
+            ) : null}
           </div>
           <div className="text-sm text-zinc-500 dark:text-zinc-400">
             {ROLE_LABEL[user.role]}
@@ -56,17 +59,19 @@ export function UserManageRow({
               {user.is_active ? "Pasif yap" : "Aktif yap"}
             </button>
           </form>
-          <button
-            type="button"
-            onClick={() => setShowPw((v) => !v)}
-            className={smallBtn}
-          >
-            Şifre
-          </button>
+          {canLogin ? (
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              className={smallBtn}
+            >
+              Şifre
+            </button>
+          ) : null}
         </div>
       </div>
 
-      {showPw ? (
+      {showPw && canLogin ? (
         <form action={pAction} className="mt-2 flex items-center gap-2">
           <input type="hidden" name="userId" value={user.id} />
           <input

@@ -5,6 +5,16 @@ import { usernameToEmail, type UserRole, type Profile } from "@/lib/roles";
 
 export const USERNAME_RE = /^[a-z0-9._-]{3,32}$/;
 
+export function autoCredentials(role: UserRole): {
+  username: string;
+  password: string;
+} {
+  const prefix =
+    role === "student" ? "ogrenci" : role === "teacher" ? "ogretmen" : "personel";
+  const rand = crypto.randomUUID().replace(/-/g, "");
+  return { username: `${prefix}.${rand.slice(0, 10)}`, password: rand };
+}
+
 export type CreateUserInput = {
   username: string;
   password: string;
