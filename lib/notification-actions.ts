@@ -31,14 +31,42 @@ function recipientNumber(s: {
   return n || null;
 }
 
+export type RemindState = {
+  ok: boolean;
+  message: string | null;
+  error: string | null;
+};
+
+// WhatsApp oturumu bağlı mı? (mesajın gerçekten gitmesi buna bağlı)
+async function orgWaConnected(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string | null,
+): Promise<boolean> {
+  if (!orgId) return false;
+  const { data } = await supabase
+    .from("wa_sessions")
+    .select("status")
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  return data?.status === "connected";
+}
+
+function queuedMessage(connected: boolean, prefix: string): string {
+  return connected
+    ? `${prefix} sıraya alındı, gönderiliyor.`
+    : `${prefix} sıraya alındı. WhatsApp bağlı değil — bağlanınca otomatik gönderilir.`;
+}
+
 // Tek öğrenciye ödeme hatırlatması (WhatsApp).
 export async function remindPayment(
+  _prev: RemindState,
   formData: FormData,
-): Promise<void> {
+): Promise<RemindState> {
   const admin = await requireAdmin();
-  if (!admin) return;
+  if (!admin) return { ok: false, message: null, error: "Yetki yok." };
   const studentId = String(formData.get("studentId") ?? "");
-  if (!studentId) return;
+  if (!studentId)
+    return { ok: false, message: null, error: "Öğrenci seçilmedi." };
 
   const supabase = await createClient();
   const { data: st } = await supabase
@@ -49,13 +77,24 @@ export async function remindPayment(
     .eq("id", studentId)
     .maybeSingle();
   const student = st as StudentContact | null;
-  if (!student || student.role !== "student") return;
+  if (!student || student.role !== "student")
+    return { ok: false, message: null, error: "Öğrenci bulunamadı." };
 
   const to = recipientNumber(student);
-  if (!to) return;
+  if (!to)
+    return {
+      ok: false,
+      message: null,
+      error: "Telefon numarası yok. Profilden öğrenci/veli numarası ekleyin.",
+    };
 
   const ledger = await getStudentLedger(studentId);
-  if (ledger.balance <= 0.5) return; // borç yoksa gönderme
+  if (ledger.balance <= 0.5)
+    return {
+      ok: false,
+      message: null,
+      error: "Güncel borç görünmüyor, hatırlatma gönderilmedi.",
+    };
 
   const body = paymentReminderMessage({
     studentName: student.full_name ?? student.username,
@@ -64,7 +103,7 @@ export async function remindPayment(
     unpaidMonths: ledger.unpaidDueCount,
   });
 
-  await supabase.from("notifications").insert({
+  const { error } = await supabase.from("notifications").insert({
     organization_id: student.organization_id,
     channel: "whatsapp",
     to_number: to,
@@ -74,18 +113,34 @@ export async function remindPayment(
     status: "queued",
     created_by: admin.id,
   });
+  if (error)
+    return {
+      ok: false,
+      message: null,
+      error: "Gönderilemedi: " + error.message,
+    };
 
+  const connected = await orgWaConnected(supabase, student.organization_id);
   revalidatePath("/tahsilat");
   revalidatePath("/kurum/whatsapp");
+  return {
+    ok: true,
+    message: queuedMessage(connected, "Hatırlatma"),
+    error: null,
+  };
 }
 
 // Tüm borçlulara ödeme hatırlatması.
-export async function remindAllOverdue(): Promise<void> {
+export async function remindAllOverdue(
+  _prev: RemindState,
+  _formData: FormData,
+): Promise<RemindState> {
   const admin = await requireAdmin();
-  if (!admin) return;
+  if (!admin) return { ok: false, message: null, error: "Yetki yok." };
 
   const { rows } = await getOutstanding();
-  if (rows.length === 0) return;
+  if (rows.length === 0)
+    return { ok: false, message: null, error: "Borçlu öğrenci yok." };
 
   const supabase = await createClient();
   const ids = rows.map((r) => r.id);
@@ -96,11 +151,15 @@ export async function remindAllOverdue(): Promise<void> {
   const byId = new Map((profs ?? []).map((p) => [p.id, p]));
 
   const inserts = [];
+  let noPhone = 0;
   for (const r of rows) {
     const s = byId.get(r.id);
     if (!s) continue;
     const to = recipientNumber(s);
-    if (!to) continue;
+    if (!to) {
+      noPhone++;
+      continue;
+    }
     inserts.push({
       organization_id: s.organization_id,
       channel: "whatsapp",
@@ -117,9 +176,25 @@ export async function remindAllOverdue(): Promise<void> {
       created_by: admin.id,
     });
   }
-  if (inserts.length > 0) {
-    await supabase.from("notifications").insert(inserts);
-  }
+  if (inserts.length === 0)
+    return {
+      ok: false,
+      message: null,
+      error: "Numarası olan borçlu bulunamadı.",
+    };
+
+  const { error } = await supabase.from("notifications").insert(inserts);
+  if (error)
+    return { ok: false, message: null, error: "Gönderilemedi: " + error.message };
+
+  const orgId = rows.map((r) => byId.get(r.id)?.organization_id).find(Boolean) ?? null;
+  const connected = await orgWaConnected(supabase, orgId ?? null);
   revalidatePath("/tahsilat");
   revalidatePath("/kurum/whatsapp");
+  const skipped = noPhone > 0 ? ` (${noPhone} kişi numarasız atlandı)` : "";
+  return {
+    ok: true,
+    message: queuedMessage(connected, `${inserts.length} hatırlatma`) + skipped,
+    error: null,
+  };
 }

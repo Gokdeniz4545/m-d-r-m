@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { PanelShell } from "@/components/panel-shell";
 import { getOutstanding, formatTRY } from "@/lib/billing";
-import { remindPayment, remindAllOverdue } from "@/lib/notification-actions";
+import { RemindButton, RemindAllButton } from "./remind-buttons";
 
 export default async function TahsilatPage() {
   const profile = await requireRole(["org_admin", "branch_admin"]);
@@ -28,11 +28,7 @@ export default async function TahsilatPage() {
       {rows.length > 0 ? (
         <>
           <div className="mb-3 flex justify-end">
-            <form action={remindAllOverdue}>
-              <button type="submit" className="btn-primary text-sm">
-                Tümüne WhatsApp hatırlatması gönder
-              </button>
-            </form>
+            <RemindAllButton />
           </div>
           <div className="card divide-y divide-border">
             {rows.map((r) => (
@@ -53,12 +49,7 @@ export default async function TahsilatPage() {
                 <div className="tabular shrink-0 font-semibold text-danger">
                   {formatTRY(r.balance)}
                 </div>
-                <form action={remindPayment}>
-                  <input type="hidden" name="studentId" value={r.id} />
-                  <button type="submit" className="btn-ghost shrink-0 text-xs">
-                    Hatırlat
-                  </button>
-                </form>
+                <RemindButton studentId={r.id} />
               </div>
             ))}
           </div>
