@@ -18,11 +18,6 @@ export default async function SubeHome() {
           href="/kisiler?tip=aktif-ogrenci"
         />
         <StatCard
-          label="Öğrencilerim"
-          value={stats.students}
-          href="/kisiler?tip=ogrenci"
-        />
-        <StatCard
           label="Öğretmenlerim"
           value={stats.teachers}
           href="/kisiler?tip=ogretmen"
@@ -39,11 +34,6 @@ export default async function SubeHome() {
           title="Kullanıcılar"
           description="Kullanıcıları görüntüle, ekle, yönet"
           href="/sube/kullanicilar"
-        />
-        <ActionCard
-          title="Dersler"
-          description="Branşlar, dersler ve kayıtlar"
-          href="/dersler"
         />
         <ActionCard
           title="Takvim"

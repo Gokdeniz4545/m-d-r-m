@@ -63,11 +63,6 @@ export default async function KurumHome() {
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <ActionCard
-          title="Dersler"
-          description="Branşlar, dersler, kayıtlar"
-          href="/dersler"
-        />
-        <ActionCard
           title="Raporlar"
           description="Aktif öğrenci ve ciro grafikleri"
           href="/raporlar"

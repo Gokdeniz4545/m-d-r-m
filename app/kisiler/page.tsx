@@ -63,7 +63,9 @@ export default async function KisilerPage({
   else if (tip === "ogretmen") people = rows.filter((p) => p.role === "teacher");
   else if (tip === "personel") people = rows.filter((p) => p.role === "staff");
   else if (tip === "yeni")
-    people = rows.filter((p) => new Date(p.created_at) >= today);
+    people = rows.filter(
+      (p) => p.role === "student" && new Date(p.created_at) >= today,
+    );
 
   people.sort((a, b) =>
     (a.full_name ?? a.username).localeCompare(b.full_name ?? b.username, "tr"),

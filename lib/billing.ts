@@ -64,6 +64,16 @@ export function formatTRY(n: number): string {
   }).format(n);
 }
 
+// Abonelik türü (ödeme periyodu)
+export const BILLING_PERIODS = ["aylik", "3_aylik", "6_aylik", "yillik"] as const;
+export type BillingPeriod = (typeof BILLING_PERIODS)[number];
+export const BILLING_PERIOD_LABEL: Record<string, string> = {
+  aylik: "Aylık",
+  "3_aylik": "3 Aylık",
+  "6_aylik": "6 Aylık",
+  yillik: "Yıllık",
+};
+
 function ymParts(y: number, m: number): string {
   return `${y}-${String(m + 1).padStart(2, "0")}`;
 }

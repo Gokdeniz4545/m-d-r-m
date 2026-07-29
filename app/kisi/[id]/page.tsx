@@ -15,7 +15,12 @@ import { SubscriptionForm } from "@/components/billing/subscription-form";
 import { PaymentForm } from "@/components/billing/payment-form";
 import { BalanceForm } from "@/components/billing/balance-form";
 import { deletePayment, deleteAdjustment } from "@/lib/billing-actions";
-import { getStudentUsedThisMonth, getStudentLedger, formatTRY } from "@/lib/billing";
+import {
+  getStudentUsedThisMonth,
+  getStudentLedger,
+  formatTRY,
+  BILLING_PERIOD_LABEL,
+} from "@/lib/billing";
 import { getTeacherEarningThisMonth, COMP_TYPE_LABEL } from "@/lib/compensation";
 import { TeacherCompensationForm } from "@/components/teacher-compensation-form";
 import { addTeacherSubject, removeTeacherSubject } from "@/lib/class-actions";
@@ -254,6 +259,7 @@ export default async function KisiProfil({
     opening_used: number;
     opening_balance: number;
     makeup_credits: number;
+    billing_period: string | null;
   } | null = null;
   let payments: {
     id: string;
@@ -272,7 +278,7 @@ export default async function KisiProfil({
   if (showBilling) {
     const { data: subData } = await supabase
       .from("subscriptions")
-      .select("monthly_fee, monthly_quota, total_months, start_date, opening_used, opening_balance, makeup_credits")
+      .select("monthly_fee, monthly_quota, total_months, start_date, opening_used, opening_balance, makeup_credits, billing_period")
       .eq("student_id", id)
       .maybeSingle();
     sub = subData;
@@ -417,6 +423,52 @@ export default async function KisiProfil({
             </>
           ) : null}
         </div>
+
+        {person.role === "student" ? (
+          <div className="mt-4 grid gap-2 border-t border-border pt-4 text-sm sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <span className="text-muted">Dersler: </span>
+              {classes.length > 0
+                ? classes
+                    .map(
+                      (c) =>
+                        c.name +
+                        (c.teacher_id
+                          ? ` (${teacherName.get(c.teacher_id) ?? "?"})`
+                          : ""),
+                    )
+                    .join(", ")
+                : "—"}
+            </div>
+            <div className="sm:col-span-2">
+              <span className="text-muted">Ders gün / saati: </span>
+              {(() => {
+                const prog = classes.flatMap((c) =>
+                  (slotsByClass.get(c.id) ?? []).map(
+                    (s) =>
+                      `${weekdayLabel(s.weekday)} ${s.start_time.slice(0, 5)}`,
+                  ),
+                );
+                return prog.length > 0 ? prog.join(", ") : "—";
+              })()}
+            </div>
+            {sub ? (
+              <>
+                <div>
+                  <span className="text-muted">Aylık aidat: </span>
+                  {formatTRY(Number(sub.monthly_fee))}
+                </div>
+                <div>
+                  <span className="text-muted">Abonelik türü: </span>
+                  {sub.billing_period
+                    ? (BILLING_PERIOD_LABEL[sub.billing_period] ??
+                      sub.billing_period)
+                    : "—"}
+                </div>
+              </>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <Section

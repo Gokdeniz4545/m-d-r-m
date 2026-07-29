@@ -15,6 +15,7 @@ type Sub = {
   opening_used?: number;
   opening_balance?: number;
   makeup_credits?: number;
+  billing_period?: string | null;
 } | null;
 
 export function SubscriptionForm({
@@ -49,6 +50,19 @@ export function SubscriptionForm({
         name="total_months"
         defaultValue={sub ? String(sub.total_months) : "1"}
       />
+      <label className="label">
+        Abonelik türü (ödeme periyodu)
+        <select
+          name="billing_period"
+          defaultValue={sub?.billing_period ?? "aylik"}
+          className="input"
+        >
+          <option value="aylik">Aylık</option>
+          <option value="3_aylik">3 Aylık</option>
+          <option value="6_aylik">6 Aylık</option>
+          <option value="yillik">Yıllık</option>
+        </select>
+      </label>
       <Field
         label="Başlangıç tarihi"
         name="start_date"

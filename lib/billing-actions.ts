@@ -32,6 +32,12 @@ export async function setSubscription(
   const openingBalance = num(formData.get("opening_balance")) || 0;
   const makeupCredits =
     parseInt(String(formData.get("makeup_credits") ?? "0"), 10) || 0;
+  const billingPeriodRaw = String(formData.get("billing_period") ?? "").trim();
+  const billingPeriod = ["aylik", "3_aylik", "6_aylik", "yillik"].includes(
+    billingPeriodRaw,
+  )
+    ? billingPeriodRaw
+    : null;
 
   if (!studentId) return { error: "Öğrenci yok.", ok: false };
   if (!(monthlyFee >= 0)) return { error: "Geçerli aylık ücret girin.", ok: false };
@@ -55,6 +61,7 @@ export async function setSubscription(
       opening_period: openingUsed > 0 ? curPeriod : null,
       opening_balance: openingBalance,
       makeup_credits: makeupCredits,
+      billing_period: billingPeriod,
     },
     { onConflict: "student_id" },
   );

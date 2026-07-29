@@ -21,7 +21,8 @@ function tally(
       if (p.is_active) activeStudents++;
     }
     if (p.role === "teacher") teachers++;
-    if (new Date(p.created_at) >= today) newToday++;
+    // Bugünün yeni kayıtları: yalnızca öğrenci kayıtları sayılır.
+    if (p.role === "student" && new Date(p.created_at) >= today) newToday++;
   }
   return { students, teachers, activeStudents, newToday };
 }
