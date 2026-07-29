@@ -13,7 +13,8 @@ import {
 } from "@/lib/roles";
 import { SubscriptionForm } from "@/components/billing/subscription-form";
 import { PaymentForm } from "@/components/billing/payment-form";
-import { deletePayment } from "@/lib/billing-actions";
+import { BalanceForm } from "@/components/billing/balance-form";
+import { deletePayment, deleteAdjustment } from "@/lib/billing-actions";
 import { getStudentUsedThisMonth, getStudentLedger, formatTRY } from "@/lib/billing";
 import { getTeacherEarningThisMonth, COMP_TYPE_LABEL } from "@/lib/compensation";
 import { TeacherCompensationForm } from "@/components/teacher-compensation-form";
@@ -21,6 +22,8 @@ import { addTeacherSubject, removeTeacherSubject } from "@/lib/class-actions";
 import { renderTemplate } from "@/lib/render-template";
 import { SendMessage } from "./send-message";
 import { Section } from "@/components/collapsible-section";
+import { EditSlotForm } from "@/components/program/edit-slot-form";
+import { SlotForm } from "@/components/program/slot-form";
 
 export default async function KisiProfil({
   params,
@@ -124,17 +127,25 @@ export default async function KisiProfil({
   };
 
   // Öğrenci: haftalık program + sıradaki ders
-  const slotsByClass = new Map<string, { weekday: number; start_time: string }[]>();
+  const slotsByClass = new Map<
+    string,
+    { id: string; weekday: number; start_time: string; end_time: string }[]
+  >();
   const nextByClass = new Map<string, { date: string; is_makeup: boolean }>();
   if (person.role === "student" && classIds.length > 0) {
     const { data: slots } = await supabase
       .from("schedule_slots")
-      .select("class_id, weekday, start_time")
+      .select("id, class_id, weekday, start_time, end_time")
       .in("class_id", classIds)
       .order("weekday");
     (slots ?? []).forEach((s) => {
       const a = slotsByClass.get(s.class_id) ?? [];
-      a.push({ weekday: s.weekday, start_time: s.start_time });
+      a.push({
+        id: s.id,
+        weekday: s.weekday,
+        start_time: s.start_time,
+        end_time: s.end_time,
+      });
       slotsByClass.set(s.class_id, a);
     });
     const { data: ns } = await supabase
@@ -241,6 +252,7 @@ export default async function KisiProfil({
     start_date: string;
     opening_used: number;
     opening_balance: number;
+    makeup_credits: number;
   } | null = null;
   let payments: {
     id: string;
@@ -250,10 +262,16 @@ export default async function KisiProfil({
     note: string | null;
   }[] = [];
   let creditsUsed = 0;
+  let adjustments: {
+    id: string;
+    amount: number;
+    note: string | null;
+    created_at: string;
+  }[] = [];
   if (showBilling) {
     const { data: subData } = await supabase
       .from("subscriptions")
-      .select("monthly_fee, monthly_quota, total_months, start_date, opening_used, opening_balance")
+      .select("monthly_fee, monthly_quota, total_months, start_date, opening_used, opening_balance, makeup_credits")
       .eq("student_id", id)
       .maybeSingle();
     sub = subData;
@@ -264,6 +282,12 @@ export default async function KisiProfil({
       .order("period_month", { ascending: false })
       .limit(12);
     payments = payData ?? [];
+    const { data: adjData } = await supabase
+      .from("adjustments")
+      .select("id, amount, note, created_at")
+      .eq("student_id", id)
+      .order("created_at", { ascending: false });
+    adjustments = adjData ?? [];
     creditsUsed = await getStudentUsedThisMonth(id);
   }
   const ledger = showBilling ? await getStudentLedger(id) : null;
@@ -307,10 +331,33 @@ export default async function KisiProfil({
   const quota = sub?.monthly_quota ?? 0;
   const remaining = quota - creditsUsed;
 
+  // Ödeme geçmişi + bakiye düzeltmeleri birleşik, tarihe göre
+  const history = [
+    ...payments.map((p) => ({
+      kind: "payment" as const,
+      id: p.id,
+      sort: p.paid_at,
+      payment: p,
+    })),
+    ...adjustments.map((a) => ({
+      kind: "adjustment" as const,
+      id: a.id,
+      sort: a.created_at,
+      adj: a,
+    })),
+  ].sort((x, y) => (x.sort < y.sort ? 1 : -1));
+
+  const backTip =
+    person.role === "teacher"
+      ? "ogretmen"
+      : person.role === "staff"
+        ? "personel"
+        : "ogrenci";
+
   return (
     <PanelShell title={person.full_name ?? person.username} profile={viewer}>
       <Link
-        href="/kisiler"
+        href={`/kisiler?tip=${backTip}`}
         className="mb-4 inline-block text-sm text-muted hover:underline"
       >
         ← Listeye dön
@@ -398,6 +445,28 @@ export default async function KisiProfil({
                     ? ` — Sıradaki ders: ${fmtDay(nextByClass.get(c.id)!.date)}${nextByClass.get(c.id)!.is_makeup ? " (telafi)" : ""}`
                     : ""}
                 </div>
+              ) : null}
+              {canManage && person.role === "student" ? (
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs font-medium text-primary hover:underline">
+                    Ders günü / saati değiştir
+                  </summary>
+                  <div className="mt-2 flex flex-col gap-2 border-t border-border pt-2">
+                    {(slotsByClass.get(c.id) ?? []).map((s) => (
+                      <EditSlotForm
+                        key={s.id}
+                        classId={c.id}
+                        slotId={s.id}
+                        weekday={s.weekday}
+                        startTime={s.start_time.slice(0, 5)}
+                        endTime={s.end_time.slice(0, 5)}
+                      />
+                    ))}
+                    {(slotsByClass.get(c.id) ?? []).length === 0 ? (
+                      <SlotForm classId={c.id} />
+                    ) : null}
+                  </div>
+                </details>
               ) : null}
               {canManage ? (
                 <Link
@@ -686,6 +755,12 @@ export default async function KisiProfil({
               <div className="text-sm text-muted">Kalan ders hakkı</div>
               <div className="mt-1 text-2xl font-bold">{remaining}</div>
             </div>
+            <div className="card p-4">
+              <div className="text-sm text-muted">Telafi ders hakkı</div>
+              <div className="mt-1 text-2xl font-bold">
+                {sub?.makeup_credits ?? 0}
+              </div>
+            </div>
             </div>
           </Section>
 
@@ -706,37 +781,76 @@ export default async function KisiProfil({
             <SendMessage studentId={person.id} templates={messageTemplates} />
           </Section>
 
-          <Section title="Ödeme geçmişi" count={payments.length}>
-          {payments.length > 0 ? (
+          {ledger ? (
+            <Section title="Bakiyeyi güncelle">
+              <BalanceForm studentId={person.id} currentBalance={ledger.balance} />
+            </Section>
+          ) : null}
+
+          <Section title="Ödeme geçmişi" count={history.length}>
+          {history.length > 0 ? (
             <div className="flex flex-col gap-2">
-              {payments.map((p) => (
-                <div
-                  key={p.id}
-                  className="card flex items-center justify-between p-3 text-sm"
-                >
-                  <span>
-                    {fmt(p.paid_at)} · {Number(p.amount)} ₺ ·{" "}
-                    {new Date(p.period_month).toLocaleDateString("tr-TR", {
-                      month: "long",
-                      year: "numeric",
-                    })}{" "}
-                    dönemi{p.note ? " · " + p.note : ""}
-                  </span>
-                  <form action={deletePayment}>
-                    <input type="hidden" name="id" value={p.id} />
-                    <input type="hidden" name="studentId" value={person.id} />
-                    <button
-                      type="submit"
-                      className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
-                    >
-                      Sil
-                    </button>
-                  </form>
-                </div>
-              ))}
+              {history.map((h) =>
+                h.kind === "payment" ? (
+                  <div
+                    key={h.id}
+                    className="card flex items-center justify-between p-3 text-sm"
+                  >
+                    <span>
+                      {fmt(h.payment.paid_at)} · {Number(h.payment.amount)} ₺ ·{" "}
+                      {new Date(h.payment.period_month).toLocaleDateString("tr-TR", {
+                        month: "long",
+                        year: "numeric",
+                      })}{" "}
+                      dönemi{h.payment.note ? " · " + h.payment.note : ""}
+                    </span>
+                    <form action={deletePayment}>
+                      <input type="hidden" name="id" value={h.id} />
+                      <input type="hidden" name="studentId" value={person.id} />
+                      <button
+                        type="submit"
+                        className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+                      >
+                        Sil
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  <div
+                    key={h.id}
+                    className="card flex items-center justify-between gap-3 border-dashed p-3 text-sm"
+                  >
+                    <span>
+                      {fmt(h.adj.created_at)} ·{" "}
+                      <span className="font-medium">Bakiye güncellemesi</span>:{" "}
+                      <span
+                        className={
+                          Number(h.adj.amount) >= 0
+                            ? "text-danger"
+                            : "text-emerald-600 dark:text-emerald-400"
+                        }
+                      >
+                        {Number(h.adj.amount) >= 0 ? "+" : ""}
+                        {Number(h.adj.amount)} ₺
+                      </span>
+                      {h.adj.note ? " · " + h.adj.note : ""}
+                    </span>
+                    <form action={deleteAdjustment}>
+                      <input type="hidden" name="id" value={h.id} />
+                      <input type="hidden" name="studentId" value={person.id} />
+                      <button
+                        type="submit"
+                        className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+                      >
+                        Sil
+                      </button>
+                    </form>
+                  </div>
+                ),
+              )}
             </div>
           ) : (
-            <p className="text-sm text-muted">Henüz ödeme yok.</p>
+            <p className="text-sm text-muted">Henüz kayıt yok.</p>
           )}
           </Section>
         </>

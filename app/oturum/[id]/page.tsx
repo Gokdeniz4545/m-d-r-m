@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
-import { ATTENDANCE_OPTIONS, type AttendanceStatus } from "@/lib/roles";
-import { markAttendance } from "@/lib/attendance-actions";
+import { AttendanceButtons } from "@/components/attendance-buttons";
 
 export default async function OturumPage({
   params,
@@ -59,6 +58,18 @@ export default async function OturumPage({
   const statusByStudent = new Map<string, string>();
   (att ?? []).forEach((a) => statusByStudent.set(a.student_id, a.status));
 
+  // Telafi ders hakkı (öğrenci başına) — "izinli" uyarısı için
+  const makeupByStudent = new Map<string, number>();
+  if (studentIds.length > 0) {
+    const { data: subs } = await supabase
+      .from("subscriptions")
+      .select("student_id, makeup_credits")
+      .in("student_id", studentIds);
+    (subs ?? []).forEach((s) =>
+      makeupByStudent.set(s.student_id, s.makeup_credits ?? 0),
+    );
+  }
+
   const dateLabel = new Date(session.date).toLocaleDateString("tr-TR", {
     weekday: "long",
     day: "2-digit",
@@ -94,29 +105,18 @@ export default async function OturumPage({
                 key={sid}
                 className="card flex flex-wrap items-center justify-between gap-3 p-3"
               >
-                <span className="font-medium">{nameById.get(sid) ?? "?"}</span>
-                <div className="flex flex-wrap gap-2">
-                  {ATTENDANCE_OPTIONS.map((opt) => {
-                    const active = current === opt.value;
-                    return (
-                      <form action={markAttendance} key={opt.value}>
-                        <input type="hidden" name="sessionId" value={id} />
-                        <input type="hidden" name="studentId" value={sid} />
-                        <input type="hidden" name="status" value={opt.value} />
-                        <button
-                          type="submit"
-                          className={
-                            active
-                              ? "rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                              : "rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent"
-                          }
-                        >
-                          {opt.label}
-                        </button>
-                      </form>
-                    );
-                  })}
+                <div>
+                  <span className="font-medium">{nameById.get(sid) ?? "?"}</span>
+                  <div className="text-xs text-muted">
+                    Telafi hakkı: {makeupByStudent.get(sid) ?? 0}
+                  </div>
                 </div>
+                <AttendanceButtons
+                  sessionId={id}
+                  studentId={sid}
+                  current={current}
+                  makeupCredits={makeupByStudent.get(sid) ?? 0}
+                />
               </div>
             );
           })}

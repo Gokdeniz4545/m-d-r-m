@@ -123,6 +123,43 @@ export default async function TakvimPage({
     byDay.set(s.date, arr);
   });
 
+  // Yoklama durumları (oturum başına) — takvimde renkli nokta için
+  const sessIds = (sessions ?? []).map((s) => s.id);
+  const attBySession = new Map<string, string[]>();
+  if (sessIds.length > 0) {
+    const { data: atts } = await supabase
+      .from("attendance")
+      .select("session_id, status")
+      .in("session_id", sessIds);
+    (atts ?? []).forEach((a) => {
+      const arr = attBySession.get(a.session_id) ?? [];
+      arr.push(a.status);
+      attBySession.set(a.session_id, arr);
+    });
+  }
+  const dotClass = (status: string) =>
+    status === "present" || status === "late"
+      ? "bg-emerald-500"
+      : status === "excused"
+        ? "bg-amber-500"
+        : status === "absent"
+          ? "bg-red-500"
+          : "bg-zinc-400";
+  const dots = (sid: string) => {
+    const st = attBySession.get(sid) ?? [];
+    if (st.length === 0) return null;
+    return (
+      <span className="inline-flex items-center gap-0.5">
+        {st.map((s, i) => (
+          <span
+            key={i}
+            className={"inline-block h-2 w-2 shrink-0 rounded-full " + dotClass(s)}
+          />
+        ))}
+      </span>
+    );
+  };
+
   const navBtn = "btn-ghost";
   const gunDay = gridDays[0];
   const prevHref =
@@ -179,10 +216,13 @@ export default async function TakvimPage({
                       <div className="tabular font-medium">
                         {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
                       </div>
-                      <div className="text-sm text-muted">
-                        {info?.name ?? "Ders"}
-                        {info?.teacher ? ` · ${info.teacher}` : ""}
-                        {s.is_makeup ? " · Telafi" : ""}
+                      <div className="flex items-center gap-1.5 text-sm text-muted">
+                        {dots(s.id)}
+                        <span>
+                          {info?.name ?? "Ders"}
+                          {info?.teacher ? ` · ${info.teacher}` : ""}
+                          {s.is_makeup ? " · Telafi" : ""}
+                        </span>
                       </div>
                     </div>
                     {canMark ? <span className="chip">Yoklama →</span> : null}
@@ -239,10 +279,13 @@ export default async function TakvimPage({
                           <div className="font-medium">
                             {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
                           </div>
-                          <div className="text-muted">
-                            {info?.name ?? "Ders"}
-                            {info?.teacher ? ` · ${info.teacher}` : ""}
-                            {s.is_makeup ? " · Telafi" : ""}
+                          <div className="flex items-center gap-1 text-muted">
+                            {dots(s.id)}
+                            <span>
+                              {info?.name ?? "Ders"}
+                              {info?.teacher ? ` · ${info.teacher}` : ""}
+                              {s.is_makeup ? " · Telafi" : ""}
+                            </span>
                           </div>
                         </>
                       );
@@ -308,18 +351,20 @@ export default async function TakvimPage({
                       <Link
                         key={s.id}
                         href={`/oturum/${s.id}`}
-                        className="truncate rounded bg-accent px-1 py-0.5 text-[11px] transition hover:bg-primary/15"
+                        className="flex items-center gap-1 rounded bg-accent px-1 py-0.5 text-[11px] transition hover:bg-primary/15"
                         title={text}
                       >
-                        {text}
+                        {dots(s.id)}
+                        <span className="truncate">{text}</span>
                       </Link>
                     ) : (
                       <span
                         key={s.id}
-                        className="truncate rounded bg-accent px-1 py-0.5 text-[11px]"
+                        className="flex items-center gap-1 rounded bg-accent px-1 py-0.5 text-[11px]"
                         title={text}
                       >
-                        {text}
+                        {dots(s.id)}
+                        <span className="truncate">{text}</span>
                       </span>
                     );
                   })}

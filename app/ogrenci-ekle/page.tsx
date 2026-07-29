@@ -38,12 +38,18 @@ export default async function OgrenciKaydi() {
     .from("branch_memberships")
     .select("user_id, branch_id")
     .eq("role", "teacher");
+  const { data: teacherSubs } = await supabase
+    .from("teacher_subjects")
+    .select("teacher_id, subject_id");
   const teachers = (teacherProfiles ?? []).map((t) => ({
     id: t.id,
     name: t.full_name ?? t.username,
     branchIds: (teacherMems ?? [])
       .filter((m) => m.user_id === t.id)
       .map((m) => m.branch_id),
+    subjectIds: (teacherSubs ?? [])
+      .filter((s) => s.teacher_id === t.id)
+      .map((s) => s.subject_id),
   }));
 
   return (

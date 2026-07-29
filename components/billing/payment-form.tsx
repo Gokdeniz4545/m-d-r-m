@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { recordPayment } from "@/lib/billing-actions";
 import { Field } from "@/components/ui/field";
+import { NumberField } from "@/components/ui/number-input";
 
 type State = { error: string | null; ok: boolean };
 const initial: State = { error: null, ok: false };
@@ -28,12 +29,7 @@ export function PaymentForm({
   return (
     <form ref={ref} action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="studentId" value={studentId} />
-      <Field
-        label="Tutar (₺)"
-        name="amount"
-        type="number"
-        defaultValue={defaultAmount}
-      />
+      <NumberField label="Tutar (₺)" name="amount" defaultValue={defaultAmount} />
       <label className="label">
         Ödeme tarihi
         <input

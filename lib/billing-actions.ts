@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getStudentLedger } from "@/lib/billing";
 
 type State = { error: string | null; ok: boolean };
 
@@ -29,6 +30,8 @@ export async function setSubscription(
   const startDate = String(formData.get("start_date") ?? "");
   const openingUsed = parseInt(String(formData.get("opening_used") ?? "0"), 10) || 0;
   const openingBalance = num(formData.get("opening_balance")) || 0;
+  const makeupCredits =
+    parseInt(String(formData.get("makeup_credits") ?? "0"), 10) || 0;
 
   if (!studentId) return { error: "Öğrenci yok.", ok: false };
   if (!(monthlyFee >= 0)) return { error: "Geçerli aylık ücret girin.", ok: false };
@@ -51,6 +54,7 @@ export async function setSubscription(
       opening_used: openingUsed,
       opening_period: openingUsed > 0 ? curPeriod : null,
       opening_balance: openingBalance,
+      makeup_credits: makeupCredits,
     },
     { onConflict: "student_id" },
   );
@@ -104,4 +108,49 @@ export async function deletePayment(formData: FormData): Promise<void> {
   await supabase.from("payments").delete().eq("id", id);
   if (studentId) revalidatePath(`/kisi/${studentId}`);
   revalidatePath("/raporlar");
+}
+
+// Bakiye güncelleme: kullanıcı hedef bakiyeyi yazar, farkı düzeltme kaydı olarak tutarız.
+export async function updateBalance(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Yetki yok.", ok: false };
+
+  const studentId = String(formData.get("studentId") ?? "");
+  const newBalance = num(formData.get("newBalance"));
+  const note = String(formData.get("note") ?? "").trim();
+  if (!studentId) return { error: "Öğrenci yok.", ok: false };
+  if (!Number.isFinite(newBalance))
+    return { error: "Geçerli bir bakiye girin.", ok: false };
+
+  const ledger = await getStudentLedger(studentId);
+  const delta = newBalance - ledger.balance;
+  if (Math.abs(delta) < 0.005)
+    return { error: "Bakiye zaten bu değerde.", ok: false };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("adjustments").insert({
+    student_id: studentId,
+    amount: delta,
+    note: note || null,
+    created_by: admin.id,
+  });
+  if (error) return { error: "Bakiye güncellenemedi: " + error.message, ok: false };
+
+  revalidatePath(`/kisi/${studentId}`);
+  revalidatePath("/tahsilat");
+  return { error: null, ok: true };
+}
+
+export async function deleteAdjustment(formData: FormData): Promise<void> {
+  if (!(await requireAdmin())) return;
+  const id = String(formData.get("id") ?? "");
+  const studentId = String(formData.get("studentId") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("adjustments").delete().eq("id", id);
+  if (studentId) revalidatePath(`/kisi/${studentId}`);
+  revalidatePath("/tahsilat");
 }

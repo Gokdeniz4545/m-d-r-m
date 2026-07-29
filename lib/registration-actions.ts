@@ -56,6 +56,8 @@ export async function registerStudent(
   const initialPayment = num(formData.get("initial_payment"));
   const openingUsed = parseInt(String(formData.get("opening_used") ?? "0"), 10) || 0;
   const openingBalance = num(formData.get("opening_balance")) || 0;
+  const makeupCredits =
+    parseInt(String(formData.get("makeup_credits") ?? "0"), 10) || 0;
   // Devir (bu ay önceden kullanılmış ders) geçişin YAPILDIĞI aya bağlanır —
   // başlangıç tarihi geçmişe alınsa bile "bu ay" = şu anki aydır.
   const curPeriod = new Date().toISOString().slice(0, 7);
@@ -185,6 +187,7 @@ export async function registerStudent(
       opening_used: openingUsed,
       opening_period: openingUsed > 0 ? curPeriod : null,
       opening_balance: openingBalance,
+      makeup_credits: makeupCredits,
     },
     { onConflict: "student_id" },
   );

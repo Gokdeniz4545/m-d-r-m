@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { setSubscription } from "@/lib/billing-actions";
 import { Field } from "@/components/ui/field";
+import { NumberField } from "@/components/ui/number-input";
 
 type State = { error: string | null; ok: boolean };
 const initial: State = { error: null, ok: false };
@@ -13,6 +14,7 @@ type Sub = {
   start_date: string;
   opening_used?: number;
   opening_balance?: number;
+  makeup_credits?: number;
 } | null;
 
 export function SubscriptionForm({
@@ -27,22 +29,24 @@ export function SubscriptionForm({
   return (
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="studentId" value={studentId} />
-      <Field
+      <NumberField
         label="Aylık ücret (₺)"
         name="monthly_fee"
-        type="number"
         defaultValue={sub ? String(sub.monthly_fee) : ""}
       />
-      <Field
+      <NumberField
         label="Aylık ders hakkı"
         name="monthly_quota"
-        type="number"
         defaultValue={sub ? String(sub.monthly_quota) : ""}
       />
-      <Field
+      <NumberField
+        label="Telafi ders hakkı"
+        name="makeup_credits"
+        defaultValue={sub?.makeup_credits ? String(sub.makeup_credits) : ""}
+      />
+      <NumberField
         label="Abonelik süresi (ay, 1-12)"
         name="total_months"
-        type="number"
         defaultValue={sub ? String(sub.total_months) : "1"}
       />
       <Field
@@ -57,16 +61,14 @@ export function SubscriptionForm({
           Geçiş / devir (mevcut öğrenci)
         </div>
         <div className="flex flex-col gap-3">
-          <Field
+          <NumberField
             label="Bu ay önceden kullanılmış ders (devir)"
             name="opening_used"
-            type="number"
             defaultValue={sub?.opening_used ? String(sub.opening_used) : ""}
           />
-          <Field
+          <NumberField
             label="Açılış bakiyesi (borç +, alacak −)"
             name="opening_balance"
-            type="number"
             defaultValue={sub?.opening_balance ? String(sub.opening_balance) : ""}
           />
           <p className="text-xs text-muted">

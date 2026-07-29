@@ -94,6 +94,7 @@ export type StudentLedger = {
   dueExpected: number;
   totalPaid: number;
   openingBalance: number; // geçişte devralınan bakiye (> 0 borç, < 0 alacak)
+  adjustmentsTotal: number; // manuel bakiye düzeltmeleri toplamı (işaretli)
   balance: number; // > 0 → borçlu, < 0 → alacaklı (fazla ödeme)
   unpaidDueCount: number;
 };
@@ -113,6 +114,12 @@ export async function getStudentLedger(studentId: string): Promise<StudentLedger
   const payments = pays ?? [];
   const totalPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
 
+  const { data: adjs } = await supabase
+    .from("adjustments")
+    .select("amount")
+    .eq("student_id", studentId);
+  const adjustmentsTotal = (adjs ?? []).reduce((s, a) => s + Number(a.amount), 0);
+
   if (!sub) {
     return {
       hasSubscription: false,
@@ -122,7 +129,8 @@ export async function getStudentLedger(studentId: string): Promise<StudentLedger
       dueExpected: 0,
       totalPaid,
       openingBalance: 0,
-      balance: -totalPaid,
+      adjustmentsTotal,
+      balance: adjustmentsTotal - totalPaid,
       unpaidDueCount: 0,
     };
   }
@@ -162,7 +170,7 @@ export async function getStudentLedger(studentId: string): Promise<StudentLedger
   }
 
   const dueExpected = monthlyFee * dueCount;
-  const balance = openingBalance + dueExpected - totalPaid;
+  const balance = openingBalance + dueExpected - totalPaid + adjustmentsTotal;
   const unpaidDueCount = periods.filter(
     (p) => p.due && p.status !== "paid",
   ).length;
@@ -175,6 +183,7 @@ export async function getStudentLedger(studentId: string): Promise<StudentLedger
     dueExpected,
     totalPaid,
     openingBalance,
+    adjustmentsTotal,
     balance,
     unpaidDueCount,
   };
@@ -209,6 +218,14 @@ export async function getOutstanding(): Promise<{
   for (const p of pays ?? []) {
     paidById.set(p.student_id, (paidById.get(p.student_id) ?? 0) + Number(p.amount));
   }
+  const { data: adjs } = await supabase
+    .from("adjustments")
+    .select("student_id, amount")
+    .in("student_id", ids);
+  const adjById = new Map<string, number>();
+  for (const a of adjs ?? []) {
+    adjById.set(a.student_id, (adjById.get(a.student_id) ?? 0) + Number(a.amount));
+  }
 
   const { data: profs } = await supabase
     .from("profiles")
@@ -224,7 +241,11 @@ export async function getOutstanding(): Promise<{
     const fee = Number(s.monthly_fee);
     const dueCount = duePeriodsCount(s.start_date, Number(s.total_months) || 1, now);
     const opening = Number(s.opening_balance ?? 0);
-    const balance = opening + fee * dueCount - (paidById.get(s.student_id) ?? 0);
+    const balance =
+      opening +
+      fee * dueCount -
+      (paidById.get(s.student_id) ?? 0) +
+      (adjById.get(s.student_id) ?? 0);
     if (balance > 0.5) {
       rows.push({
         id: prof.id,

@@ -1,15 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { registerStudent } from "@/lib/registration-actions";
 import { Field } from "@/components/ui/field";
+import { NumberField } from "@/components/ui/number-input";
 import { WEEKDAYS } from "@/lib/roles";
+import { getTeacherWeeklyBusy, type BusySlot } from "@/lib/teacher-availability";
+import { BookingGrid } from "@/components/booking-grid";
 
 type State = { error: string | null; ok: boolean; studentId?: string };
 const initial: State = { error: null, ok: false };
 type Branch = { id: string; name: string };
-type Teacher = { id: string; name: string; branchIds: string[] };
+type Teacher = {
+  id: string;
+  name: string;
+  branchIds: string[];
+  subjectIds: string[];
+};
+
+function addHour(h: string): string {
+  const [hh, mm] = h.split(":").map(Number);
+  return `${String((hh + 1) % 24).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
 
 export function RegistrationForm({
   branches,
@@ -27,12 +40,40 @@ export function RegistrationForm({
   const [subjectChoice, setSubjectChoice] = useState(
     subjects.length > 0 ? "" : "__new__",
   );
+  const [teacherId, setTeacherId] = useState("");
+  const [weekday, setWeekday] = useState("1");
+  const [startTime, setStartTime] = useState("15:00");
+  const [endTime, setEndTime] = useState("16:00");
+  const [busy, setBusy] = useState<BusySlot[]>([]);
+  const [loadingBusy, startBusy] = useTransition();
+
+  // Öğretmen seçilince haftalık dolu saatlerini getir
+  useEffect(() => {
+    if (!teacherId) {
+      setBusy([]);
+      return;
+    }
+    startBusy(async () => {
+      setBusy(await getTeacherWeeklyBusy(teacherId));
+    });
+  }, [teacherId]);
 
   if (branches.length === 0) {
     return <p className="text-sm text-muted">Önce bir şube oluşturulmalı.</p>;
   }
 
-  const branchTeachers = teachers.filter((t) => t.branchIds.includes(branchId));
+  const hasExistingSubject = subjectChoice !== "" && subjectChoice !== "__new__";
+  const branchTeachers = teachers.filter(
+    (t) =>
+      t.branchIds.includes(branchId) &&
+      (hasExistingSubject ? t.subjectIds.includes(subjectChoice) : true),
+  );
+
+  const selectSlot = (wd: number, h: string) => {
+    setWeekday(String(wd));
+    setStartTime(h);
+    setEndTime(addHour(h));
+  };
 
   return (
     <form action={action} className="flex max-w-2xl flex-col gap-6">
@@ -44,7 +85,10 @@ export function RegistrationForm({
             name="branchId"
             required
             value={branchId}
-            onChange={(e) => setBranchId(e.target.value)}
+            onChange={(e) => {
+              setBranchId(e.target.value);
+              setTeacherId("");
+            }}
             className="input"
           >
             <option value="" disabled>
@@ -96,7 +140,10 @@ export function RegistrationForm({
             name="subjectId"
             required
             value={subjectChoice}
-            onChange={(e) => setSubjectChoice(e.target.value)}
+            onChange={(e) => {
+              setSubjectChoice(e.target.value);
+              setTeacherId("");
+            }}
             className="input"
           >
             <option value="" disabled>
@@ -114,8 +161,14 @@ export function RegistrationForm({
           <Field label="Yeni branş adı" name="newSubject" required />
         ) : null}
         <label className="label">
-          Öğretmen (isteğe bağlı)
-          <select key={branchId} name="teacherId" defaultValue="" className="input">
+          Öğretmen{" "}
+          {hasExistingSubject ? "(bu branşı verenler)" : "(isteğe bağlı)"}
+          <select
+            name="teacherId"
+            value={teacherId}
+            onChange={(e) => setTeacherId(e.target.value)}
+            className="input"
+          >
             <option value="">Atanmadı</option>
             {branchTeachers.map((t) => (
               <option key={t.id} value={t.id}>
@@ -124,16 +177,21 @@ export function RegistrationForm({
             ))}
           </select>
         </label>
+        {hasExistingSubject && branchTeachers.length === 0 ? (
+          <p className="text-xs text-muted">
+            Bu şubede bu branşı veren öğretmen yok.
+          </p>
+        ) : null}
       </section>
 
       <section className="card flex flex-col gap-3 p-5">
         <h2 className="section-title">Ücret & abonelik</h2>
-        <Field label="Aylık ücret (₺)" name="monthly_fee" type="number" />
-        <Field label="Aylık ders hakkı" name="monthly_quota" type="number" />
-        <Field
+        <NumberField label="Aylık ücret (₺)" name="monthly_fee" />
+        <NumberField label="Aylık ders hakkı" name="monthly_quota" />
+        <NumberField label="Telafi ders hakkı" name="makeup_credits" />
+        <NumberField
           label="Abonelik süresi (ay, 1-12)"
           name="total_months"
-          type="number"
           defaultValue="1"
         />
         <Field
@@ -142,25 +200,22 @@ export function RegistrationForm({
           type="date"
           defaultValue={new Date().toISOString().slice(0, 10)}
         />
-        <Field
+        <NumberField
           label="Kayıtta alınan ödeme (₺, isteğe bağlı)"
           name="initial_payment"
-          type="number"
         />
         <div className="rounded-lg border border-dashed border-border p-3">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
             Geçiş / devir (mevcut öğrenci ise)
           </div>
           <div className="flex flex-col gap-3">
-            <Field
+            <NumberField
               label="Bu ay önceden kullanılmış ders"
               name="opening_used"
-              type="number"
             />
-            <Field
+            <NumberField
               label="Açılış bakiyesi (borç +, alacak −)"
               name="opening_balance"
-              type="number"
             />
           </div>
         </div>
@@ -168,10 +223,33 @@ export function RegistrationForm({
 
       <section className="card flex flex-col gap-3 p-5">
         <h2 className="section-title">Haftalık program</h2>
+        {teacherId ? (
+          <div className="rounded-lg border border-border p-3">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+              Öğretmen takvimi — boş saat seç
+            </div>
+            <BookingGrid
+              busy={busy}
+              weekday={parseInt(weekday, 10)}
+              start={startTime}
+              onSelect={selectSlot}
+              loading={loadingBusy}
+            />
+          </div>
+        ) : (
+          <p className="text-xs text-muted">
+            Öğretmen seçersen boş saatlerini takvimden seçebilirsin.
+          </p>
+        )}
         <div className="flex flex-wrap items-end gap-3">
           <label className="label">
             Gün
-            <select name="weekday" defaultValue="1" className="input">
+            <select
+              name="weekday"
+              value={weekday}
+              onChange={(e) => setWeekday(e.target.value)}
+              className="input"
+            >
               {WEEKDAYS.map((d, i) => (
                 <option key={i} value={i + 1}>
                   {d}
@@ -181,11 +259,23 @@ export function RegistrationForm({
           </label>
           <label className="label">
             Başlangıç
-            <input type="time" name="start_time" defaultValue="15:00" className="input" />
+            <input
+              type="time"
+              name="start_time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="input"
+            />
           </label>
           <label className="label">
             Bitiş
-            <input type="time" name="end_time" defaultValue="16:00" className="input" />
+            <input
+              type="time"
+              name="end_time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="input"
+            />
           </label>
         </div>
         <p className="text-xs text-muted">

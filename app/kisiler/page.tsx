@@ -9,6 +9,7 @@ const TITLES: Record<string, string> = {
   "aktif-ogrenci": "Aktif öğrenciler",
   ogrenci: "Öğrenciler",
   ogretmen: "Öğretmenler",
+  personel: "Personel",
   yeni: "Bugünün yeni kayıtları",
 };
 
@@ -60,6 +61,7 @@ export default async function KisilerPage({
     people = rows.filter((p) => p.role === "student" && p.is_active);
   else if (tip === "ogrenci") people = rows.filter((p) => p.role === "student");
   else if (tip === "ogretmen") people = rows.filter((p) => p.role === "teacher");
+  else if (tip === "personel") people = rows.filter((p) => p.role === "staff");
   else if (tip === "yeni")
     people = rows.filter((p) => new Date(p.created_at) >= today);
 
