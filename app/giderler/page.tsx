@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getNow } from "@/lib/clock";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
@@ -42,7 +41,7 @@ export default async function GiderlerPage() {
   void teacherIds;
 
   // Bu ay toplamı
-  const now = await getNow();
+  const now = new Date();
   const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const thisMonth = expenses.filter((e) => e.expense_date.startsWith(monthKey));
   const monthTotal = thisMonth.reduce((s, e) => s + e.amount, 0);

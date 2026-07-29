@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getNow } from "@/lib/clock";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
@@ -51,7 +50,7 @@ export default async function OgretmenHome() {
     studentsByClass.set(e.class_id, a);
   }
 
-  const today = await getNow();
+  const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStr = ymd(today);
   const newToday = enrollments.filter((e) => new Date(e.created_at) >= today).length;

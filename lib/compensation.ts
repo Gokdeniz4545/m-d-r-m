@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { getNow } from "@/lib/clock";
 
 export type CompType = "per_session" | "monthly";
 
@@ -43,7 +42,7 @@ export async function getTeacherEarningThisMonth(
   const classIds = (cls ?? []).map((c) => c.id);
   if (classIds.length === 0) return { comp, sessions: 0, earning: 0 };
 
-  const now = await getNow();
+  const now = new Date();
   const first = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const last = new Date(now.getFullYear(), now.getMonth() + 1, 0)
     .toISOString()

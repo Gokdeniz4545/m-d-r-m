@@ -4,9 +4,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { TodayDate } from "@/components/today-date";
 import { Wordmark } from "@/components/wordmark";
 import { ROLE_LABEL, ROLE_NAV, type Profile } from "@/lib/roles";
-import { getClockOffsetDays } from "@/lib/clock";
 
-export async function PanelShell({
+export function PanelShell({
   title,
   profile,
   children,
@@ -18,7 +17,6 @@ export async function PanelShell({
   const nav = ROLE_NAV[profile.role];
   const displayName = profile.full_name ?? profile.username;
   const initial = displayName.charAt(0).toLocaleUpperCase("tr");
-  const clockOffset = await getClockOffsetDays();
 
   return (
     <div className="flex min-h-screen">
@@ -51,22 +49,11 @@ export async function PanelShell({
 
       {/* İçerik */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {clockOffset !== 0 ? (
-          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 border-b border-amber-500/30 bg-amber-500/15 px-4 py-1.5 text-center text-xs font-medium text-amber-700 dark:text-amber-300">
-            <span>🕒 Test saati açık —</span>
-            <TodayDate offsetDays={clockOffset} className="font-semibold" />
-            <span className="text-amber-600/80 dark:text-amber-400/80">
-              (gerçek değil, {clockOffset > 0 ? "+" : ""}
-              {clockOffset} gün)
-            </span>
-          </div>
-        ) : null}
-
         {/* Mobil üst bar */}
         <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 md:hidden">
           <Wordmark />
           <div className="flex items-center gap-2">
-            <TodayDate offsetDays={clockOffset} className="hidden text-xs min-[420px]:block" />
+            <TodayDate className="hidden text-xs min-[420px]:block" />
             <ThemeToggle />
             <LogoutButton />
           </div>
@@ -78,7 +65,7 @@ export async function PanelShell({
         {/* Masaüstü başlık */}
         <header className="hidden items-center justify-between border-b border-border px-8 py-5 md:flex">
           <h1 className="text-xl font-bold">{title}</h1>
-          <TodayDate offsetDays={clockOffset} />
+          <TodayDate />
         </header>
 
         <main className="mx-auto w-full max-w-6xl flex-1 p-5 md:p-8">

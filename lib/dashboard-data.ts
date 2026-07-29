@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { getNow } from "@/lib/clock";
 
 export type Stats = {
   students: number;
@@ -44,7 +43,7 @@ export async function getBranchStats(branchIds: string[]): Promise<Stats> {
     .from("profiles")
     .select("role, is_active, created_at")
     .in("id", userIds);
-  const today = await getNow();
+  const today = new Date();
   today.setHours(0, 0, 0, 0);
   return tally(profs ?? [], today);
 }
@@ -58,7 +57,7 @@ export async function getOrgStats(): Promise<Stats & { branches: number }> {
   const { count: branches } = await supabase
     .from("branches")
     .select("id", { count: "exact", head: true });
-  const today = await getNow();
+  const today = new Date();
   today.setHours(0, 0, 0, 0);
   return { ...tally(profs ?? [], today), branches: branches ?? 0 };
 }

@@ -3,19 +3,12 @@
 import { useEffect, useState } from "react";
 
 // Bugünün tarihi — kullanıcının kendi saat dilimine göre, istemcide hesaplanır.
-// offsetDays: test saati (gün ofseti); 0 iken gerçek zaman.
-export function TodayDate({
-  className = "",
-  offsetDays = 0,
-}: {
-  className?: string;
-  offsetDays?: number;
-}) {
+export function TodayDate({ className = "" }: { className?: string }) {
   const [today, setToday] = useState("");
 
   useEffect(() => {
     const fmt = () => {
-      const d = new Date(Date.now() + offsetDays * 86_400_000);
+      const d = new Date();
       const tarih = d.toLocaleDateString("tr-TR", {
         day: "numeric",
         month: "long",
@@ -28,7 +21,7 @@ export function TodayDate({
     // Gün değişince (gece yarısı) güncellensin
     const id = setInterval(fmt, 60_000);
     return () => clearInterval(id);
-  }, [offsetDays]);
+  }, []);
 
   return (
     <span

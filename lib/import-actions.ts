@@ -1,7 +1,6 @@
 "use server";
 
 import { getSessionProfile } from "@/lib/auth";
-import { getNow } from "@/lib/clock";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createAppUser } from "@/lib/user-admin";
 
@@ -111,7 +110,7 @@ export async function importStudents(
   const branchByName = new Map((branches ?? []).map((b) => [norm(b.name), b.id]));
   const singleBranch = (branches ?? []).length === 1 ? branches![0].id : null;
 
-  const now = await getNow();
+  const now = new Date();
   const curPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const today = ymd(now);
 

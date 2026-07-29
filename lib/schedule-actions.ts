@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getNow } from "@/lib/clock";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -71,7 +70,7 @@ export async function updateSlot(formData: FormData): Promise<void> {
     .eq("id", slotId);
 
   // Yaklaşan dersleri yeni gün/saate taşı
-  const today = await getNow();
+  const today = new Date();
   today.setHours(0, 0, 0, 0);
   await supabase.from("sessions").delete().eq("slot_id", slotId).gte("date", ymd(today));
   const rows: {
@@ -134,7 +133,7 @@ export async function generateSessions(formData: FormData): Promise<void> {
     end_time: string;
     slot_id: string;
   }[] = [];
-  const today = await getNow();
+  const today = new Date();
   today.setHours(0, 0, 0, 0);
   for (let i = 0; i < weeks * 7; i++) {
     const d = new Date(today);

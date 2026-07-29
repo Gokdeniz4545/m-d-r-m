@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getNow } from "@/lib/clock";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
@@ -11,7 +10,7 @@ export default async function RaporlarPage() {
   const supabase = await createClient();
 
   // Son 6 ay
-  const d0 = await getNow();
+  const d0 = new Date();
   d0.setDate(1);
   d0.setHours(0, 0, 0, 0);
   const months = Array.from({ length: 6 }, (_, idx) => {
