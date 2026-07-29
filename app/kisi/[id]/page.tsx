@@ -460,6 +460,7 @@ export default async function KisiProfil({
                         weekday={s.weekday}
                         startTime={s.start_time.slice(0, 5)}
                         endTime={s.end_time.slice(0, 5)}
+                        teacherId={c.teacher_id}
                       />
                     ))}
                     {(slotsByClass.get(c.id) ?? []).length === 0 ? (
