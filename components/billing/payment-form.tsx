@@ -11,10 +11,12 @@ export function PaymentForm({
   studentId,
   defaultAmount,
   defaultPeriod,
+  defaultDate,
 }: {
   studentId: string;
   defaultAmount: string;
   defaultPeriod: string;
+  defaultDate: string;
 }) {
   const [state, action, pending] = useActionState(recordPayment, initial);
   const ref = useRef<HTMLFormElement>(null);
@@ -33,7 +35,17 @@ export function PaymentForm({
         defaultValue={defaultAmount}
       />
       <label className="label">
-        Dönem (ay)
+        Ödeme tarihi
+        <input
+          type="date"
+          name="paidAt"
+          defaultValue={defaultDate}
+          required
+          className="input"
+        />
+      </label>
+      <label className="label">
+        Dönem (hangi ay)
         <input
           type="month"
           name="period"

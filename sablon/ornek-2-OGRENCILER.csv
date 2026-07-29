@@ -1,0 +1,201 @@
+Ad Soyad;Öğrenci Telefonu;Veli Adı;Veli Telefonu;Şube;Branş;Öğretmen;Aylık Ücret;Aylık Ders Sayısı;Ders Günü;Ders Saati;Kayıt Tarihi;Devir Borç;Devir İşlenen Ders
+Mert Avcı;;Serpil Avcı;05302900008;Merkez;Yan Flüt;Ayşe Yıldız;2200;8;Pazartesi;14:00;;;
+Ela Güneş;;Serpil Güneş;05364245772;Merkez;Gitar;Mehmet Kaya;2600;4;Pazartesi;18:00;;;
+Kaan Öztürk;;Hüseyin Öztürk;05345757054;Kadıköy;Ney;Deniz Koç;2200;4;Cuma;19:00;2026-05-04;4400;3
+Hüseyin Duman;;Ali Duman;05433502987;Merkez;Keman;Elif Demir;1800;4;Salı;14:00;;;
+Defne Kılıç;;Ramazan Kılıç;05332548794;Kadıköy;Ukulele;Mustafa Çelik;1800;4;Salı;12:00;;;
+Efe Şimşek;;Fatma Şimşek;05349805908;Kadıköy;Ukulele;Mustafa Çelik;2400;4;Salı;18:00;;;
+Meryem Polat;05558987648;;;Kadıköy;Davul;Emre Aydın;2600;4;Çarşamba;15:00;2026-04-20;2600;1
+Fatma Aydın;;Necla Aydın;05326820403;Merkez;Org;Ahmet Yılmaz;2200;4;Cuma;16:00;2026-06-03;2200;2
+Elif Özdemir;;Nurten Özdemir;05431730556;Kadıköy;Bağlama;Mustafa Çelik;1800;4;Salı;14:00;;;
+Şeyma Kaya;;Mustafa Kaya;05334967668;Merkez;Viyolonsel;Can Arslan;2600;4;Çarşamba;13:00;;;
+Arda Işık;;Fatma Işık;05368466105;Merkez;Viyolonsel;Can Arslan;1800;4;Cumartesi;11:00;;;
+Kerem Korkmaz;;Fatma Korkmaz;05427688566;Merkez;Viyolonsel;Can Arslan;2000;4;Perşembe;16:00;;;
+Arda Yıldız;;Ramazan Yıldız;05533451318;Merkez;Viyola;Elif Demir;2400;4;Pazartesi;12:00;;;
+Emre Kılıç;;Fatma Kılıç;05441144522;Kadıköy;Piyano;Fatma Öztürk;2200;4;Salı;19:00;2026-04-19;0;2
+Meryem Öztürk;;Hatice Öztürk;05542576735;Merkez;Viyolonsel;Can Arslan;2000;8;Cumartesi;13:00;2026-01-28;0;4
+Ece Tekin;;Emine Tekin;05537167855;Kadıköy;Kanun;Deniz Koç;2000;8;Cumartesi;16:00;;;
+Ege Tekin;05443398856;;;Kadıköy;Ney;Deniz Koç;2400;4;Cumartesi;12:00;;;
+Derya Koç;;Kadir Koç;05442833514;Kadıköy;Ney;Deniz Koç;2200;4;Pazartesi;14:00;;;
+Ayşe Özdemir;;Gülay Özdemir;05356073843;Merkez;Viyolonsel;Can Arslan;2600;8;Cuma;17:00;;;
+Emre Taş;;Ali Taş;05451180557;Merkez;Gitar;Mehmet Kaya;2200;4;Çarşamba;17:00;;;
+İrem Işık;;Hatice Işık;05307262526;Merkez;Org;Ahmet Yılmaz;2600;4;Çarşamba;18:00;2026-04-26;5200;3
+Zeynep Güneş;;Hatice Güneş;05359349835;Merkez;Piyano;Ahmet Yılmaz;2000;4;Pazartesi;18:00;2026-02-07;2000;3
+Deniz Öztürk;;Fatma Öztürk;05426157517;Kadıköy;Bağlama;Mustafa Çelik;2600;4;Çarşamba;18:00;;;
+Arda Kara;;Fatma Kara;05369165063;Kadıköy;Bağlama;Mustafa Çelik;2400;4;Pazartesi;13:00;;;
+Sude Çakır;;Fatma Çakır;05544697271;Merkez;Gitar;Mehmet Kaya;2000;8;Perşembe;13:00;;;
+Yağmur Gül;05531365066;;;Kadıköy;Ukulele;Mustafa Çelik;2400;8;Cumartesi;10:00;;;
+Deniz Ünal;;Kadir Ünal;05321811998;Kadıköy;Şan;Zeynep Şahin;2600;4;Perşembe;17:00;;;
+Can Acar;;Ali Acar;05349489608;Kadıköy;Piyano;Fatma Öztürk;2000;4;Perşembe;18:00;;;
+Efe Özdemir;05535727816;;;Merkez;Viyolonsel;Can Arslan;2000;8;Pazartesi;12:00;;;
+Naz Doğan;;Sevim Doğan;05306832905;Kadıköy;Şan;Zeynep Şahin;2000;4;Salı;11:00;;;
+Zeynep Aksoy;;Ayşe Aksoy;05437860934;Kadıköy;Bağlama;Mustafa Çelik;2200;4;Pazartesi;14:00;;;
+Berk Erdem;;Gülay Erdem;05454049624;Merkez;Viyolonsel;Can Arslan;2600;4;Pazartesi;10:00;;;
+Fatma Demir;;Zeynep Demir;05304817695;Kadıköy;Ney;Deniz Koç;2600;8;Cumartesi;15:00;;;
+Meryem Bozkurt;;Ayşe Bozkurt;05341106826;Merkez;Org;Ahmet Yılmaz;2200;8;Cumartesi;19:00;;;
+Ayşe Yalçın;;Zeynep Yalçın;05537856731;Kadıköy;Piyano;Fatma Öztürk;2600;8;Perşembe;15:00;2026-05-25;5200;1
+Mert Öztürk;;Ramazan Öztürk;05303409733;Kadıköy;Bağlama;Mustafa Çelik;2400;4;Salı;13:00;;;
+Kaan Acar;;Hüseyin Acar;05534762615;Merkez;Viyolonsel;Can Arslan;2400;4;Cuma;12:00;2026-02-13;4800;1
+Murat Kaya;05556054936;;;Kadıköy;Perküsyon;Emre Aydın;2200;4;Cumartesi;15:00;;;
+Derya Arslan;;Mehmet Arslan;05556526278;Merkez;Keman;Elif Demir;2400;4;Salı;19:00;;;
+Mustafa Çakır;;Ramazan Çakır;05431830303;Kadıköy;Bağlama;Mustafa Çelik;2600;4;Salı;19:00;;;
+Ali Ünal;05335670995;;;Kadıköy;Şan;Zeynep Şahin;2600;4;Salı;13:00;;;
+Mustafa Çelik;;Hüseyin Çelik;05541161582;Kadıköy;Şan;Zeynep Şahin;2000;4;Pazartesi;15:00;;;
+Ela Öztürk;;Ramazan Öztürk;05364027926;Kadıköy;Bağlama;Mustafa Çelik;1800;8;Cuma;17:00;;;
+Yusuf Güneş;;Serpil Güneş;05358894814;Merkez;Gitar;Mehmet Kaya;2200;4;Salı;18:00;2026-02-24;4400;3
+Yusuf Yıldırım;;Sevim Yıldırım;05365958746;Kadıköy;Kanun;Deniz Koç;2600;4;Salı;14:00;;;
+Esra Yılmaz;;Fatma Yılmaz;05336749492;Merkez;Gitar;Mehmet Kaya;2400;8;Çarşamba;15:00;;;
+Hasan Aydın;;Ramazan Aydın;05366755892;Merkez;Org;Ahmet Yılmaz;2000;4;Çarşamba;14:00;;;
+Meryem Yılmaz;;Ahmet Yılmaz;05543581938;Kadıköy;Şan;Zeynep Şahin;1800;4;Cumartesi;19:00;;;
+Ahmet Çakır;;Serpil Çakır;05457815380;Merkez;Piyano;Ahmet Yılmaz;2200;8;Perşembe;11:00;;;
+Esra Erdem;;Hatice Erdem;05369165289;Merkez;Gitar;Mehmet Kaya;2200;4;Çarşamba;11:00;;;
+Berk Koç;;Hüseyin Koç;05425953753;Merkez;Gitar;Mehmet Kaya;1800;4;Pazartesi;13:00;2026-05-01;0;3
+Selin Korkmaz;;Ramazan Korkmaz;05542780851;Merkez;Gitar;Mehmet Kaya;2200;4;Salı;19:00;2026-04-27;2200;1
+Kaan Demir;;Mustafa Demir;05366076506;Kadıköy;Kanun;Deniz Koç;2200;4;Pazartesi;16:00;;;
+Hasan Çetin;;Mehmet Çetin;05532051791;Kadıköy;Perküsyon;Emre Aydın;2600;8;Salı;19:00;;;
+Şeyma Özdemir;;Emine Özdemir;05549600258;Merkez;Piyano;Ahmet Yılmaz;2000;4;Salı;14:00;;;
+Hasan Ateş;;Ahmet Ateş;05538131434;Merkez;Keman;Elif Demir;2600;4;Salı;12:00;;;
+Yağmur Avcı;;Hüseyin Avcı;05429989029;Merkez;Viyola;Elif Demir;2600;4;Cuma;17:00;2026-04-11;0;2
+Efe Çakır;;Ahmet Çakır;05558926736;Kadıköy;Şan;Zeynep Şahin;1800;4;Salı;14:00;;;
+Hüseyin Öztürk;;Ahmet Öztürk;05447044661;Kadıköy;Davul;Emre Aydın;1800;4;Pazartesi;12:00;2026-01-03;1800;3
+Deniz Kurt;;Mehmet Kurt;05532099605;Merkez;Org;Ahmet Yılmaz;2400;4;Cumartesi;17:00;;;
+Ece Kılıç;;Ahmet Kılıç;05334829119;Kadıköy;Kanun;Deniz Koç;2000;4;Perşembe;18:00;;;
+Deniz Yalçın;;Hatice Yalçın;05336732947;Merkez;Org;Ahmet Yılmaz;2600;4;Cumartesi;15:00;2026-03-13;2600;1
+Elif Şahin;;Hatice Şahin;05539534616;Merkez;Org;Ahmet Yılmaz;1800;8;Çarşamba;14:00;;;
+Derya Korkmaz;;Nurten Korkmaz;05534111845;Merkez;Yan Flüt;Ayşe Yıldız;2200;4;Çarşamba;19:00;;;
+Efe Çetin;;Gülay Çetin;05323094634;Kadıköy;Şan;Zeynep Şahin;1800;4;Pazartesi;10:00;;;
+Ali Çakır;;Ayşe Çakır;05354453416;Merkez;Piyano;Ahmet Yılmaz;2000;4;Pazartesi;10:00;;;
+Kaan Güneş;05436195741;;;Kadıköy;Şan;Zeynep Şahin;2200;4;Cumartesi;16:00;2026-01-04;2200;3
+Hatice Kaya;;Ahmet Kaya;05357218754;Kadıköy;Piyano;Fatma Öztürk;2000;8;Cuma;17:00;;;
+Derya Taş;;Mehmet Taş;05364156763;Kadıköy;Ukulele;Mustafa Çelik;2000;4;Perşembe;11:00;2026-04-02;4000;2
+Emre Şahin;;Fatma Şahin;05364748265;Kadıköy;Davul;Emre Aydın;1800;8;Salı;14:00;;;
+Meryem Aydın;;Sevim Aydın;05331959500;Merkez;Piyano;Ahmet Yılmaz;2400;4;Pazartesi;12:00;2026-03-11;4800;2
+Arda Bulut;;Hüseyin Bulut;05456501858;Kadıköy;Ney;Deniz Koç;1800;4;Salı;17:00;;;
+Fatma Avcı;;Ali Avcı;05338495849;Kadıköy;Şan;Zeynep Şahin;2600;4;Pazartesi;11:00;;;
+Mehmet Bulut;;Mehmet Bulut;05458158528;Merkez;Piyano;Ahmet Yılmaz;2600;4;Cumartesi;10:00;;;
+Arda Çelik;;Fatma Çelik;05347148153;Kadıköy;Şan;Zeynep Şahin;2200;4;Pazartesi;12:00;;;
+Ahmet Şahin;;Hatice Şahin;05433336632;Kadıköy;Şan;Zeynep Şahin;2000;4;Pazartesi;15:00;2026-01-09;2000;3
+Naz Aksoy;05458315201;;;Merkez;Viyolonsel;Can Arslan;2400;4;Perşembe;13:00;;;
+İrem Çelik;;Mehmet Çelik;05531110486;Merkez;Gitar;Mehmet Kaya;2000;8;Salı;17:00;;;
+Kaan Çelik;;Ramazan Çelik;05553601077;Merkez;Org;Ahmet Yılmaz;1800;4;Salı;15:00;2026-06-03;3600;3
+Fatma Tekin;;Serpil Tekin;05443980363;Kadıköy;Ney;Deniz Koç;2600;4;Perşembe;11:00;2026-04-15;0;3
+Sude Şimşek;;Kadir Şimşek;05452592202;Kadıköy;Perküsyon;Emre Aydın;2600;4;Salı;15:00;;;
+Ayşe Acar;;Ali Acar;05353897939;Merkez;Piyano;Ahmet Yılmaz;2400;4;Pazartesi;14:00;2026-03-05;4800;2
+Defne Gül;;Gülay Gül;05426750503;Kadıköy;Şan;Zeynep Şahin;1800;4;Çarşamba;14:00;;;
+Ege Demir;;Serpil Demir;05335797119;Kadıköy;Şan;Zeynep Şahin;1800;8;Cumartesi;11:00;;;
+Hasan Bulut;;Nurten Bulut;05546092678;Merkez;Keman;Elif Demir;2200;4;Pazartesi;14:00;2026-01-26;0;1
+Derya Demir;;Nurten Demir;05327657127;Kadıköy;Kanun;Deniz Koç;1800;8;Cuma;10:00;2026-05-04;1800;6
+Arda Çakır;;Serpil Çakır;05442891310;Kadıköy;Piyano;Fatma Öztürk;1800;4;Salı;15:00;;;
+İbrahim Duman;;Ahmet Duman;05457573312;Merkez;Piyano;Ahmet Yılmaz;1800;4;Çarşamba;16:00;;;
+Kaan Yılmaz;;Ramazan Yılmaz;05459907639;Kadıköy;Piyano;Fatma Öztürk;2000;4;Cuma;11:00;2026-02-05;4000;2
+Murat Kılıç;;Ramazan Kılıç;05431651316;Kadıköy;Şan;Zeynep Şahin;2000;4;Cumartesi;11:00;2026-05-12;4000;2
+Zeynep Sarı;;Emine Sarı;05551910605;Kadıköy;Ney;Deniz Koç;2000;4;Salı;18:00;;;
+Hüseyin Bulut;;Mehmet Bulut;05344288903;Merkez;Piyano;Ahmet Yılmaz;2400;8;Pazartesi;11:00;;;
+Büşra Kaya;;Kadir Kaya;05334026384;Merkez;Yan Flüt;Ayşe Yıldız;2000;4;Çarşamba;16:00;;;
+Ayşe Koç;;Zeynep Koç;05363226524;Kadıköy;Ukulele;Mustafa Çelik;2400;4;Cuma;13:00;2026-02-06;0;1
+Mert Aydın;05549502852;;;Kadıköy;Piyano;Fatma Öztürk;1800;4;Cuma;18:00;;;
+İbrahim Gül;;Sevim Gül;05541972426;Kadıköy;Bağlama;Mustafa Çelik;2400;4;Cuma;19:00;;;
+Ege Kaya;;Mustafa Kaya;05453075060;Merkez;Yan Flüt;Ayşe Yıldız;2200;4;Salı;16:00;;;
+Elif Öztürk;;Ali Öztürk;05363547483;Merkez;Viyolonsel;Can Arslan;2400;8;Perşembe;13:00;;;
+Esra Aydın;;Sevim Aydın;05452617045;Kadıköy;Bağlama;Mustafa Çelik;2000;8;Pazartesi;14:00;2026-06-13;2000;1
+Mert Kurt;;Gülay Kurt;05428369388;Merkez;Viyolonsel;Can Arslan;2200;4;Cumartesi;10:00;;;
+Ahmet Aslan;;Sevim Aslan;05539605729;Kadıköy;Piyano;Fatma Öztürk;2200;8;Pazartesi;19:00;;;
+Derya Aydın;;Necla Aydın;05304553121;Merkez;Org;Ahmet Yılmaz;1800;4;Cuma;11:00;2026-02-12;1800;2
+Emre Demir;;Hatice Demir;05356514928;Kadıköy;Piyano;Fatma Öztürk;1800;4;Çarşamba;10:00;;;
+Yusuf Erdem;05325505165;;;Merkez;Yan Flüt;Ayşe Yıldız;1800;4;Perşembe;16:00;;;
+Meryem Şahin;;Mehmet Şahin;05307585659;Kadıköy;Kanun;Deniz Koç;1800;4;Salı;13:00;2026-02-21;0;2
+Ali Koç;;Emine Koç;05546187181;Kadıköy;Ukulele;Mustafa Çelik;2600;4;Cumartesi;18:00;;;
+Şeyma Yıldız;;Ahmet Yıldız;05345956638;Kadıköy;Şan;Zeynep Şahin;2400;4;Pazartesi;12:00;2026-03-24;2400;3
+Derya Doğan;;Gülay Doğan;05306289313;Merkez;Yan Flüt;Ayşe Yıldız;2200;4;Salı;14:00;;;
+Merve Aydın;;Ahmet Aydın;05303692365;Kadıköy;Ney;Deniz Koç;2200;4;Salı;18:00;;;
+Burak Yılmaz;;Fatma Yılmaz;05556134580;Merkez;Yan Flüt;Ayşe Yıldız;2600;4;Çarşamba;17:00;;;
+Berk Sarı;;Hatice Sarı;05554067831;Merkez;Gitar;Mehmet Kaya;2000;8;Salı;16:00;2026-01-21;0;7
+Hatice Doğan;;Zeynep Doğan;05428019758;Kadıköy;Ukulele;Mustafa Çelik;2400;4;Cumartesi;18:00;2026-06-07;2400;1
+Hüseyin Yıldırım;;Mehmet Yıldırım;05355761331;Kadıköy;Ukulele;Mustafa Çelik;2000;4;Cuma;13:00;;;
+Büşra Kılıç;05325464082;;;Merkez;Keman;Elif Demir;2200;8;Cumartesi;19:00;;;
+Mustafa Koç;05308416602;;;Merkez;Gitar;Mehmet Kaya;1800;8;Cumartesi;19:00;2026-03-27;0;1
+Ela Bulut;;Emine Bulut;05445346284;Merkez;Keman;Elif Demir;2600;4;Salı;18:00;;;
+Zeynep Avcı;;Gülay Avcı;05443115140;Kadıköy;Kanun;Deniz Koç;2000;4;Salı;16:00;;;
+Murat Yalçın;;Emine Yalçın;05332312188;Merkez;Yan Flüt;Ayşe Yıldız;2200;4;Çarşamba;12:00;2026-02-09;2200;2
+Emre Yıldız;;Serpil Yıldız;05552084040;Merkez;Org;Ahmet Yılmaz;2000;4;Salı;17:00;;;
+Ali Işık;;Ahmet Işık;05435258500;Kadıköy;Şan;Zeynep Şahin;2600;4;Çarşamba;15:00;;;
+Yusuf Bozkurt;;Ahmet Bozkurt;05458161994;Merkez;Org;Ahmet Yılmaz;1800;4;Perşembe;15:00;2026-06-15;3600;3
+Efe Taş;;Ramazan Taş;05334853783;Merkez;Piyano;Ahmet Yılmaz;2200;8;Pazartesi;13:00;;;
+Selin Tekin;;Sevim Tekin;05436707804;Merkez;Gitar;Mehmet Kaya;2200;4;Pazartesi;13:00;;;
+Yağmur Aksoy;;Hüseyin Aksoy;05356591236;Merkez;Viyolonsel;Can Arslan;2200;4;Perşembe;14:00;;;
+Selin Gül;;Necla Gül;05429408849;Kadıköy;Şan;Zeynep Şahin;2600;4;Perşembe;17:00;2026-05-18;0;2
+Hüseyin Yıldız;;Ahmet Yıldız;05335756480;Merkez;Yan Flüt;Ayşe Yıldız;2000;8;Cumartesi;13:00;2026-05-21;2000;2
+Emine Güneş;;Nurten Güneş;05542952905;Merkez;Keman;Elif Demir;2000;4;Salı;18:00;;;
+Berk Bulut;;Necla Bulut;05427921998;Merkez;Viyola;Elif Demir;2600;8;Pazartesi;19:00;;;
+Ece Demir;;Hatice Demir;05437441730;Kadıköy;Kanun;Deniz Koç;2000;4;Perşembe;16:00;2026-04-03;4000;3
+Meryem Güneş;;Nurten Güneş;05352870245;Merkez;Yan Flüt;Ayşe Yıldız;1800;4;Cumartesi;17:00;;;
+Kaan Koç;;Kadir Koç;05357766209;Merkez;Org;Ahmet Yılmaz;2000;4;Pazartesi;13:00;;;
+İrem Özdemir;;Hüseyin Özdemir;05534741487;Kadıköy;Ney;Deniz Koç;2200;4;Pazartesi;15:00;;;
+Hasan Doğan;05544800872;;;Merkez;Gitar;Mehmet Kaya;2400;8;Perşembe;19:00;2026-03-22;4800;2
+Ece Yalçın;;Nurten Yalçın;05356721823;Kadıköy;Ukulele;Mustafa Çelik;2000;4;Çarşamba;18:00;;;
+Mehmet Kara;05361935769;;;Kadıköy;Bağlama;Mustafa Çelik;2000;4;Cumartesi;13:00;;;
+Kaan Uçar;05449503117;;;Merkez;Yan Flüt;Ayşe Yıldız;2200;4;Çarşamba;16:00;2026-02-23;2200;2
+Selin Şimşek;;Mehmet Şimşek;05554735960;Kadıköy;Piyano;Fatma Öztürk;2400;8;Cuma;19:00;;;
+Mert Yıldız;;Hatice Yıldız;05545517497;Kadıköy;Ney;Deniz Koç;2600;8;Perşembe;17:00;2026-06-19;2600;5
+Ayşe Duman;05434265226;;;Merkez;Org;Ahmet Yılmaz;2400;4;Cumartesi;19:00;;;
+Ahmet Kaya;;Mehmet Kaya;05556225432;Kadıköy;Perküsyon;Emre Aydın;2200;4;Çarşamba;19:00;;;
+Mert Güneş;;Hatice Güneş;05544389525;Kadıköy;Bağlama;Mustafa Çelik;2400;4;Çarşamba;18:00;;;
+Naz Yılmaz;;Nurten Yılmaz;05349855973;Merkez;Keman;Elif Demir;2600;4;Pazartesi;17:00;;;
+Berk Yalçın;;Ayşe Yalçın;05366841372;Kadıköy;Davul;Emre Aydın;1800;8;Çarşamba;11:00;;;
+Can Uçar;;Zeynep Uçar;05425741420;Merkez;Yan Flüt;Ayşe Yıldız;2200;8;Cumartesi;11:00;;;
+İrem Şahin;05446021302;;;Kadıköy;Piyano;Fatma Öztürk;2600;4;Cumartesi;17:00;2026-03-20;2600;3
+Can Duman;;Zeynep Duman;05303938634;Kadıköy;Ukulele;Mustafa Çelik;2000;4;Pazartesi;13:00;;;
+Mert Aslan;05348859717;;;Merkez;Yan Flüt;Ayşe Yıldız;1800;4;Perşembe;15:00;;;
+Fatma Özdemir;05559290358;;;Kadıköy;Davul;Emre Aydın;2200;4;Salı;11:00;2026-06-19;2200;2
+Ege Şahin;;Gülay Şahin;05432625054;Kadıköy;Şan;Zeynep Şahin;2000;4;Çarşamba;15:00;;;
+Meryem Keskin;05356805333;;;Kadıköy;Şan;Zeynep Şahin;2600;4;Cuma;10:00;;;
+Ela Acar;;Ahmet Acar;05329748608;Kadıköy;Kanun;Deniz Koç;2400;8;Perşembe;19:00;;;
+Elif Keskin;05533546356;;;Merkez;Viyolonsel;Can Arslan;2000;8;Çarşamba;12:00;;;
+Kerem Bozkurt;;Mustafa Bozkurt;05443511115;Merkez;Keman;Elif Demir;1800;4;Perşembe;14:00;;;
+Ahmet Ünal;;Serpil Ünal;05458068514;Merkez;Viyola;Elif Demir;1800;8;Cumartesi;10:00;2026-04-02;1800;5
+Büşra Çetin;;Zeynep Çetin;05531287927;Kadıköy;Ukulele;Mustafa Çelik;2600;4;Pazartesi;11:00;;;
+İbrahim Kara;;Nurten Kara;05544887600;Kadıköy;Perküsyon;Emre Aydın;1800;8;Salı;19:00;;;
+Hatice Sarı;;Fatma Sarı;05559992970;Merkez;Keman;Elif Demir;1800;4;Salı;11:00;;;
+Mustafa Yıldırım;;Gülay Yıldırım;05348119341;Kadıköy;Piyano;Fatma Öztürk;2600;8;Cumartesi;19:00;2026-01-17;0;4
+Murat Polat;;Hüseyin Polat;05329565543;Kadıköy;Ney;Deniz Koç;2000;4;Perşembe;16:00;2026-02-18;4000;1
+Hüseyin Kılıç;;Hatice Kılıç;05555366344;Merkez;Yan Flüt;Ayşe Yıldız;2600;4;Cumartesi;13:00;;;
+İbrahim Kurt;;Emine Kurt;05369262268;Kadıköy;Ukulele;Mustafa Çelik;2200;4;Pazartesi;10:00;;;
+Yusuf Duman;;Sevim Duman;05327910500;Kadıköy;Perküsyon;Emre Aydın;1800;4;Perşembe;11:00;2026-01-23;0;1
+Şeyma Taş;05341552818;;;Kadıköy;Piyano;Fatma Öztürk;2200;8;Salı;12:00;2026-01-19;4400;2
+Efe Yıldız;;Mehmet Yıldız;05361720114;Kadıköy;Davul;Emre Aydın;2600;4;Salı;12:00;;;
+Merve Demir;;Hatice Demir;05536166778;Merkez;Yan Flüt;Ayşe Yıldız;2600;8;Çarşamba;18:00;;;
+İrem Erdem;;Nurten Erdem;05432566672;Merkez;Yan Flüt;Ayşe Yıldız;2600;4;Çarşamba;18:00;2026-06-27;0;3
+Meryem Tekin;;Ayşe Tekin;05553764953;Merkez;Gitar;Mehmet Kaya;2200;4;Pazartesi;16:00;2026-03-10;4400;2
+Burak Kaya;05457259693;;;Kadıköy;Piyano;Fatma Öztürk;2600;4;Perşembe;12:00;2026-03-26;0;3
+Mehmet Keskin;;Hüseyin Keskin;05435992678;Kadıköy;Perküsyon;Emre Aydın;2400;4;Pazartesi;14:00;2026-02-04;2400;1
+Mert Bozkurt;;Ahmet Bozkurt;05303111609;Merkez;Viyolonsel;Can Arslan;1800;4;Pazartesi;10:00;;;
+Can Çetin;05552626684;;;Kadıköy;Ukulele;Mustafa Çelik;2200;4;Cuma;11:00;;;
+Selin Keskin;;Ayşe Keskin;05456794206;Kadıköy;Piyano;Fatma Öztürk;2200;4;Çarşamba;14:00;;;
+Kerem Özdemir;;Gülay Özdemir;05369981228;Merkez;Viyolonsel;Can Arslan;2000;4;Pazartesi;15:00;2026-01-27;4000;3
+Yağmur Ateş;;Mustafa Ateş;05367131225;Kadıköy;Kanun;Deniz Koç;2600;4;Cuma;18:00;2026-02-28;2600;3
+Mustafa Şahin;;Hatice Şahin;05425990404;Kadıköy;Şan;Zeynep Şahin;2400;4;Perşembe;13:00;;;
+Hüseyin Güneş;;Necla Güneş;05369303943;Merkez;Yan Flüt;Ayşe Yıldız;2000;4;Pazartesi;11:00;;;
+Elif Ateş;;Fatma Ateş;05535585029;Kadıköy;Ukulele;Mustafa Çelik;2200;4;Perşembe;19:00;;;
+Esra Aslan;;Ahmet Aslan;05354338531;Merkez;Yan Flüt;Ayşe Yıldız;1800;4;Cuma;17:00;;;
+Ege Gül;05329967187;;;Kadıköy;Şan;Zeynep Şahin;2400;4;Pazartesi;13:00;;;
+Hüseyin Özdemir;;Ramazan Özdemir;05353055330;Merkez;Gitar;Mehmet Kaya;2600;4;Salı;11:00;2026-02-03;0;3
+Büşra Duman;;Fatma Duman;05361909105;Merkez;Yan Flüt;Ayşe Yıldız;2600;4;Çarşamba;19:00;;;
+Ece Taş;;Kadir Taş;05551262650;Kadıköy;Davul;Emre Aydın;2600;8;Salı;18:00;;;
+Yusuf Aydın;;Ayşe Aydın;05335576788;Kadıköy;Şan;Zeynep Şahin;2600;4;Perşembe;13:00;;;
+Mert Yılmaz;;Gülay Yılmaz;05427579255;Kadıköy;Kanun;Deniz Koç;2400;4;Çarşamba;12:00;;;
+Emine Öztürk;05355028893;;;Merkez;Gitar;Mehmet Kaya;1800;4;Pazartesi;19:00;;;
+Ege Ateş;;Fatma Ateş;05456152340;Merkez;Org;Ahmet Yılmaz;2400;4;Çarşamba;16:00;;;
+Derya Gül;;Necla Gül;05338745777;Merkez;Gitar;Mehmet Kaya;2000;8;Salı;11:00;;;
+Mert Çakır;;Ali Çakır;05439669357;Kadıköy;Kanun;Deniz Koç;1800;4;Cumartesi;15:00;;;
+Emine Şimşek;;Ramazan Şimşek;05346496831;Kadıköy;Perküsyon;Emre Aydın;1800;4;Çarşamba;19:00;;;
+Efe Şahin;05538912443;;;Merkez;Viyolonsel;Can Arslan;1800;4;Cumartesi;10:00;;;
+Merve Kurt;;Nurten Kurt;05346665814;Kadıköy;Davul;Emre Aydın;2600;4;Çarşamba;11:00;2026-06-15;5200;1
+Mustafa Ünal;;Fatma Ünal;05425526743;Kadıköy;Kanun;Deniz Koç;2400;4;Pazartesi;15:00;;;
+Şeyma Aslan;05458085363;;;Kadıköy;Piyano;Fatma Öztürk;2000;4;Perşembe;13:00;2026-03-12;2000;1
+Ali Aksoy;;Gülay Aksoy;05361903461;Kadıköy;Ney;Deniz Koç;2400;4;Cuma;17:00;2026-05-14;0;3
+Can Koç;05303081593;;;Merkez;Gitar;Mehmet Kaya;2000;4;Perşembe;15:00;;;
+Selin Doğan;;Zeynep Doğan;05424880121;Kadıköy;Ney;Deniz Koç;1800;4;Salı;13:00;2026-02-17;1800;3
+Hüseyin Polat;;Ramazan Polat;05305876862;Kadıköy;Şan;Zeynep Şahin;2200;4;Cumartesi;12:00;;;
+Defne Çelik;;Mustafa Çelik;05458807582;Merkez;Yan Flüt;Ayşe Yıldız;2000;4;Çarşamba;17:00;;;
+Elif Yıldırım;;Nurten Yıldırım;05545629975;Kadıköy;Şan;Zeynep Şahin;2400;4;Pazartesi;11:00;2026-03-12;0;1
+Mehmet Acar;05547395821;;;Kadıköy;Ney;Deniz Koç;2600;4;Çarşamba;19:00;2026-06-03;0;2

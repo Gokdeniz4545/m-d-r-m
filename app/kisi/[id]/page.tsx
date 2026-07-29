@@ -303,6 +303,7 @@ export default async function KisiProfil({
   };
   const now = new Date();
   const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const currentDate = `${currentPeriod}-${String(now.getDate()).padStart(2, "0")}`;
   const quota = sub?.monthly_quota ?? 0;
   const remaining = quota - creditsUsed;
 
@@ -697,6 +698,7 @@ export default async function KisiProfil({
               studentId={person.id}
               defaultAmount={sub ? String(Number(sub.monthly_fee)) : ""}
               defaultPeriod={currentPeriod}
+              defaultDate={currentDate}
             />
           </Section>
 

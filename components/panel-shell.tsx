@@ -1,6 +1,7 @@
 import { LogoutButton } from "@/components/logout-button";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { TodayDate } from "@/components/today-date";
 import { Wordmark } from "@/components/wordmark";
 import { ROLE_LABEL, ROLE_NAV, type Profile } from "@/lib/roles";
 
@@ -52,6 +53,7 @@ export function PanelShell({
         <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 md:hidden">
           <Wordmark />
           <div className="flex items-center gap-2">
+            <TodayDate className="hidden text-xs min-[420px]:block" />
             <ThemeToggle />
             <LogoutButton />
           </div>
@@ -63,6 +65,7 @@ export function PanelShell({
         {/* Masaüstü başlık */}
         <header className="hidden items-center justify-between border-b border-border px-8 py-5 md:flex">
           <h1 className="text-xl font-bold">{title}</h1>
+          <TodayDate />
         </header>
 
         <main className="mx-auto w-full max-w-6xl flex-1 p-5 md:p-8">
