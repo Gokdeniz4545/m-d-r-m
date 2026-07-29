@@ -13,11 +13,13 @@ export function PaymentForm({
   defaultAmount,
   defaultPeriod,
   defaultDate,
+  defaultReceivedBy,
 }: {
   studentId: string;
   defaultAmount: string;
   defaultPeriod: string;
   defaultDate: string;
+  defaultReceivedBy?: string;
 }) {
   const [state, action, pending] = useActionState(recordPayment, initial);
   const ref = useRef<HTMLFormElement>(null);
@@ -51,6 +53,11 @@ export function PaymentForm({
         />
       </label>
       <Field label="Not (isteğe bağlı)" name="note" />
+      <Field
+        label="Ödemeyi alan"
+        name="receivedBy"
+        defaultValue={defaultReceivedBy}
+      />
       <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "..." : "Ödeme al"}
       </button>

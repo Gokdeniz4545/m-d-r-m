@@ -656,9 +656,18 @@ export default async function KisiProfil({
                     {fmt(p.expense_date)}
                     {p.note ? ` · ${p.note}` : ""}
                   </span>
-                  <span className="tabular font-semibold">
-                    {formatTRY(p.amount)}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span className="tabular font-semibold">
+                      {formatTRY(p.amount)}
+                    </span>
+                    <Link
+                      href={`/makbuz/gider/${p.id}`}
+                      target="_blank"
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Yazdır
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
@@ -800,6 +809,7 @@ export default async function KisiProfil({
               defaultAmount={sub ? String(Number(sub.monthly_fee)) : ""}
               defaultPeriod={currentPeriod}
               defaultDate={currentDate}
+              defaultReceivedBy={viewer.full_name ?? viewer.username}
             />
           </Section>
 
@@ -830,16 +840,25 @@ export default async function KisiProfil({
                       })}{" "}
                       dönemi{h.payment.note ? " · " + h.payment.note : ""}
                     </span>
-                    <form action={deletePayment}>
-                      <input type="hidden" name="id" value={h.id} />
-                      <input type="hidden" name="studentId" value={person.id} />
-                      <button
-                        type="submit"
-                        className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+                    <div className="flex shrink-0 items-center gap-3">
+                      <Link
+                        href={`/makbuz/tahsilat/${h.id}`}
+                        target="_blank"
+                        className="text-xs font-medium text-primary hover:underline"
                       >
-                        Sil
-                      </button>
-                    </form>
+                        Yazdır
+                      </Link>
+                      <form action={deletePayment}>
+                        <input type="hidden" name="id" value={h.id} />
+                        <input type="hidden" name="studentId" value={person.id} />
+                        <button
+                          type="submit"
+                          className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+                        >
+                          Sil
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 ) : (
                   <div

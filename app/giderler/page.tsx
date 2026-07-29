@@ -107,6 +107,13 @@ export default async function GiderlerPage() {
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <span className="tabular font-semibold">{formatTRY(e.amount)}</span>
+                <Link
+                  href={`/makbuz/gider/${e.id}`}
+                  target="_blank"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Yazdır
+                </Link>
                 <form action={deleteExpense}>
                   <input type="hidden" name="id" value={e.id} />
                   <button

@@ -75,6 +75,7 @@ export async function recordPayment(
   const period = String(formData.get("period") ?? "");
   const paidAt = String(formData.get("paidAt") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim();
+  const receivedBy = String(formData.get("receivedBy") ?? "").trim();
 
   if (!studentId) return { error: "Öğrenci yok.", ok: false };
   if (!(amount > 0)) return { error: "Geçerli tutar girin.", ok: false };
@@ -91,6 +92,7 @@ export async function recordPayment(
     // boşsa varsayılan now().
     paid_at: paidAt ? paidAt + "T12:00:00" : undefined,
     note: note || null,
+    received_by: receivedBy || null,
   });
   if (error) return { error: "Ödeme kaydedilemedi: " + error.message, ok: false };
 
