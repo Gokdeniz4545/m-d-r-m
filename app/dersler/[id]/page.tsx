@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getNow } from "@/lib/clock";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -101,7 +102,7 @@ export default async function ClassDetailPage({
     .order("weekday")
     .order("start_time");
 
-  const now = new Date();
+  const now = await getNow();
   now.setHours(0, 0, 0, 0);
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const { data: upcoming } = await supabase

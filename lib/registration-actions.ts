@@ -5,6 +5,7 @@ import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createAppUser, autoCredentials } from "@/lib/user-admin";
+import { getToday } from "@/lib/clock";
 
 type State = { error: string | null; ok: boolean; studentId?: string };
 
@@ -52,7 +53,7 @@ export async function registerStudent(
   const startDateInput = String(formData.get("start_date") ?? "").trim();
   const startDate = /^\d{4}-\d{2}-\d{2}$/.test(startDateInput)
     ? startDateInput
-    : new Date().toISOString().slice(0, 10);
+    : await getToday();
   const initialPayment = num(formData.get("initial_payment"));
   const openingUsed = parseInt(String(formData.get("opening_used") ?? "0"), 10) || 0;
   const openingBalance = num(formData.get("opening_balance")) || 0;

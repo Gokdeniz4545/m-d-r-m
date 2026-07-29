@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getNow } from "@/lib/clock";
 
 function ymd(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -10,7 +11,7 @@ function ymd(d: Date): string {
 // yoklama kayıtları (izinli hariç). Yoklama girilmemiş ders hak düşürmez.
 export async function getStudentUsedThisMonth(studentId: string): Promise<number> {
   const supabase = await createClient();
-  const now = new Date();
+  const now = await getNow();
   const curPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   let used = 0;
@@ -133,7 +134,7 @@ export async function getStudentLedger(studentId: string): Promise<StudentLedger
   const start = new Date(sub.start_date);
   const startY = start.getFullYear();
   const startM = start.getMonth();
-  const now = new Date();
+  const now = await getNow();
 
   const paidByPeriod = new Map<string, number>();
   for (const p of payments) {
@@ -216,7 +217,7 @@ export async function getOutstanding(): Promise<{
     .in("id", ids);
   const profById = new Map((profs ?? []).map((p) => [p.id, p]));
 
-  const now = new Date();
+  const now = await getNow();
   const rows: OutstandingRow[] = [];
   for (const s of list) {
     const prof = profById.get(s.student_id);

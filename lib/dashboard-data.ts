@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getNow } from "@/lib/clock";
 
 export type Stats = {
   students: number;
@@ -7,16 +8,10 @@ export type Stats = {
   newToday: number;
 };
 
-function startOfToday(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
 function tally(
   profiles: { role: string; is_active: boolean; created_at: string }[],
+  today: Date,
 ): Stats {
-  const today = startOfToday();
   let students = 0;
   let teachers = 0;
   let activeStudents = 0;
@@ -49,7 +44,9 @@ export async function getBranchStats(branchIds: string[]): Promise<Stats> {
     .from("profiles")
     .select("role, is_active, created_at")
     .in("id", userIds);
-  return tally(profs ?? []);
+  const today = await getNow();
+  today.setHours(0, 0, 0, 0);
+  return tally(profs ?? [], today);
 }
 
 // Kurum geneli istatistikleri (org_admin; RLS org profillerini döndürür).
@@ -61,7 +58,9 @@ export async function getOrgStats(): Promise<Stats & { branches: number }> {
   const { count: branches } = await supabase
     .from("branches")
     .select("id", { count: "exact", head: true });
-  return { ...tally(profs ?? []), branches: branches ?? 0 };
+  const today = await getNow();
+  today.setHours(0, 0, 0, 0);
+  return { ...tally(profs ?? [], today), branches: branches ?? 0 };
 }
 
 // branch_admin'in yönettiği şube id'leri.

@@ -15,6 +15,7 @@ import { SubscriptionForm } from "@/components/billing/subscription-form";
 import { PaymentForm } from "@/components/billing/payment-form";
 import { deletePayment } from "@/lib/billing-actions";
 import { getStudentUsedThisMonth, getStudentLedger, formatTRY } from "@/lib/billing";
+import { getNow } from "@/lib/clock";
 import { getTeacherEarningThisMonth, COMP_TYPE_LABEL } from "@/lib/compensation";
 import { TeacherCompensationForm } from "@/components/teacher-compensation-form";
 import { addTeacherSubject, removeTeacherSubject } from "@/lib/class-actions";
@@ -107,7 +108,7 @@ export default async function KisiProfil({
   }
 
   const classIds = classes.map((c) => c.id);
-  const nowDate = new Date();
+  const nowDate = await getNow();
   nowDate.setHours(0, 0, 0, 0);
   const todayStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, "0")}-${String(nowDate.getDate()).padStart(2, "0")}`;
   const fmt = (d: string) =>
@@ -301,7 +302,7 @@ export default async function KisiProfil({
       year: "numeric",
     });
   };
-  const now = new Date();
+  const now = await getNow();
   const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const currentDate = `${currentPeriod}-${String(now.getDate()).padStart(2, "0")}`;
   const quota = sub?.monthly_quota ?? 0;

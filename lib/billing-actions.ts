@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getNow } from "@/lib/clock";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,7 +37,7 @@ export async function setSubscription(
   if (!(totalMonths >= 1 && totalMonths <= 12))
     return { error: "Abonelik 1-12 ay olmalı.", ok: false };
 
-  const now = new Date();
+  const now = await getNow();
   const curPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   const supabase = await createClient();

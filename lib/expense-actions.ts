@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getToday } from "@/lib/clock";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,7 +39,7 @@ export async function addExpense(
     organization_id: admin.organization_id,
     category,
     amount,
-    expense_date: expenseDate || new Date().toISOString().slice(0, 10),
+    expense_date: expenseDate || (await getToday()),
     due_date: /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? dueDate : null,
     teacher_id: category === "maas" ? teacherId : null,
     note: note || null,
