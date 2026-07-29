@@ -24,6 +24,8 @@ export type CreateUserInput = {
   notifyConsent?: boolean;
   guardianName?: string | null;
   guardianPhone?: string | null;
+  tcKimlik?: string | null;
+  address?: string | null;
   role: UserRole;
   organizationId: string | null;
   branchIds?: string[];
@@ -85,6 +87,8 @@ export async function createAppUser(
     notify_consent: input.notifyConsent ?? false,
     guardian_name: input.guardianName?.trim() || null,
     guardian_phone: input.guardianPhone?.trim() || null,
+    tc_kimlik_no: input.tcKimlik?.trim() || null,
+    address: input.address?.trim() || null,
     role: input.role,
     is_active: true,
   });

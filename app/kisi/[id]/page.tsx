@@ -24,6 +24,7 @@ import { SendMessage } from "./send-message";
 import { Section } from "@/components/collapsible-section";
 import { EditSlotForm } from "@/components/program/edit-slot-form";
 import { SlotForm } from "@/components/program/slot-form";
+import { PersonContactForm } from "@/components/person-contact-form";
 
 export default async function KisiProfil({
   params,
@@ -37,7 +38,7 @@ export default async function KisiProfil({
   const { data: person } = await supabase
     .from("profiles")
     .select(
-      "id, username, full_name, phone, email, guardian_name, guardian_phone, role, is_active, created_at",
+      "id, username, full_name, phone, email, guardian_name, guardian_phone, tc_kimlik_no, address, role, is_active, created_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -405,6 +406,14 @@ export default async function KisiProfil({
                 <span className="text-muted">Veli telefonu: </span>
                 {person.guardian_phone || "—"}
               </div>
+              <div>
+                <span className="text-muted">TC kimlik no: </span>
+                {person.tc_kimlik_no || "—"}
+              </div>
+              <div className="sm:col-span-2">
+                <span className="text-muted">Adres: </span>
+                {person.address || "—"}
+              </div>
             </>
           ) : null}
         </div>
@@ -484,6 +493,22 @@ export default async function KisiProfil({
         <p className="text-sm text-muted">Ders kaydı yok.</p>
       )}
       </Section>
+
+      {canManage && person.role === "student" ? (
+        <Section title="Kişisel bilgiler">
+          <PersonContactForm
+            personId={person.id}
+            person={{
+              phone: person.phone,
+              email: person.email,
+              tc_kimlik_no: person.tc_kimlik_no,
+              address: person.address,
+              guardian_name: person.guardian_name,
+              guardian_phone: person.guardian_phone,
+            }}
+          />
+        </Section>
+      ) : null}
 
       {person.role === "teacher" ? (
         <>

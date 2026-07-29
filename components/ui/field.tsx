@@ -6,6 +6,7 @@ export function Field({
   autoComplete,
   defaultValue,
   placeholder,
+  inputMode,
 }: {
   label: string;
   name: string;
@@ -14,6 +15,7 @@ export function Field({
   autoComplete?: string;
   defaultValue?: string;
   placeholder?: string;
+  inputMode?: "text" | "numeric" | "tel" | "email" | "decimal";
 }) {
   return (
     <label className="label">
@@ -25,6 +27,7 @@ export function Field({
         autoComplete={autoComplete}
         defaultValue={defaultValue}
         placeholder={placeholder}
+        inputMode={inputMode}
         className="input"
       />
     </label>

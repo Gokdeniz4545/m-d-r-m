@@ -38,6 +38,8 @@ export async function registerStudent(
   const email = String(formData.get("email") ?? "").trim();
   const guardianName = String(formData.get("guardianName") ?? "").trim();
   const guardianPhone = String(formData.get("guardianPhone") ?? "").trim();
+  const tcKimlik = String(formData.get("tc_kimlik_no") ?? "").trim();
+  const address = String(formData.get("address") ?? "").trim();
   const notifyConsent = formData.get("notifyConsent") != null;
   const subjectIdInput = String(formData.get("subjectId") ?? "");
   const newSubject = String(formData.get("newSubject") ?? "").trim();
@@ -63,6 +65,8 @@ export async function registerStudent(
   const curPeriod = new Date().toISOString().slice(0, 7);
 
   if (!branchId) return { error: "Şube seçilmeli.", ok: false };
+  if (tcKimlik && !/^\d{11}$/.test(tcKimlik))
+    return { error: "TC kimlik no 11 haneli olmalı.", ok: false };
   const hasExistingSubject = subjectIdInput !== "" && subjectIdInput !== "__new__";
   if (!hasExistingSubject && newSubject.length < 2) {
     return { error: "Branş seçin veya yeni branş adı girin.", ok: false };
@@ -101,6 +105,8 @@ export async function registerStudent(
     notifyConsent,
     guardianName,
     guardianPhone,
+    tcKimlik,
+    address,
     role: "student",
     organizationId: actor.organization_id,
     branchIds: [branchId],

@@ -102,8 +102,23 @@ export function RegistrationForm({
           </select>
         </label>
         <Field label="Ad soyad" name="fullName" required />
+        <Field
+          label="TC kimlik no (11 hane, isteğe bağlı)"
+          name="tc_kimlik_no"
+          inputMode="numeric"
+          placeholder="12345678901"
+        />
         <Field label="Telefon (WhatsApp için)" name="phone" type="tel" placeholder="05xx xxx xx xx" />
         <Field label="E-posta (isteğe bağlı)" name="email" type="email" />
+        <label className="label">
+          Adres
+          <textarea
+            name="address"
+            rows={2}
+            placeholder="Mahalle, cadde, no, ilçe/il"
+            className="input"
+          />
+        </label>
         <p className="text-xs text-muted">
           Öğrenci giriş yapmaz; kullanıcı adı/şifre gerekmez.
         </p>
