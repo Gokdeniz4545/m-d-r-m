@@ -61,12 +61,12 @@ export function QuickAddUserForm({
         </select>
       </label>
       <Field label="Ad soyad" name="fullName" required />
-      <Field label="Telefon (WhatsApp için)" name="phone" type="tel" placeholder="05xx xxx xx xx" />
+      <Field label="Telefon" name="phone" type="tel" placeholder="05xx xxx xx xx" />
       <Field label="E-posta (isteğe bağlı)" name="email" type="email" />
       {role === "student" ? (
         <>
           <Field label="Veli adı soyadı" name="guardianName" />
-          <Field label="Veli telefonu (WhatsApp)" name="guardianPhone" type="tel" placeholder="05xx xxx xx xx" />
+          <Field label="Veli telefonu" name="guardianPhone" type="tel" placeholder="05xx xxx xx xx" />
         </>
       ) : null}
       <p className="text-xs text-muted">
@@ -74,7 +74,7 @@ export function QuickAddUserForm({
       </p>
       <label className="flex items-start gap-2.5 text-sm">
         <input type="checkbox" name="notifyConsent" defaultChecked className="mt-0.5 h-4 w-4 accent-primary" />
-        <span className="text-muted">Bildirim (WhatsApp/SMS/e-posta) onayı var (KVKK).</span>
+        <span className="text-muted">İletişim/bildirim onayı var (KVKK).</span>
       </label>
 
       {role === "teacher" ? (

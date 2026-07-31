@@ -80,12 +80,6 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M8 9h8M8 12.5h8" />
     </>
   ),
-  whatsapp: (
-    <>
-      <path d="M20 11.5a8 8 0 0 1-11.9 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z" />
-      <path d="M8.5 9c0 3 2.5 5.5 5.5 5.5" />
-    </>
-  ),
 };
 
 export type IconName = keyof typeof PATHS;

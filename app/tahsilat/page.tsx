@@ -2,7 +2,6 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { PanelShell } from "@/components/panel-shell";
 import { getOutstanding, formatTRY } from "@/lib/billing";
-import { RemindButton, RemindAllButton } from "./remind-buttons";
 
 export default async function TahsilatPage() {
   const profile = await requireRole(["org_admin", "branch_admin"]);
@@ -26,11 +25,7 @@ export default async function TahsilatPage() {
       </div>
 
       {rows.length > 0 ? (
-        <>
-          <div className="mb-3 flex justify-end">
-            <RemindAllButton />
-          </div>
-          <div className="card divide-y divide-border">
+        <div className="card divide-y divide-border">
             {rows.map((r) => (
               <div
                 key={r.id}
@@ -49,11 +44,9 @@ export default async function TahsilatPage() {
                 <div className="tabular shrink-0 font-semibold text-danger">
                   {formatTRY(r.balance)}
                 </div>
-                <RemindButton studentId={r.id} />
               </div>
             ))}
-          </div>
-        </>
+        </div>
       ) : (
         <div className="card p-8 text-center text-sm text-muted">
           Borçlu öğrenci yok. Tüm ödemeler güncel. 🎉

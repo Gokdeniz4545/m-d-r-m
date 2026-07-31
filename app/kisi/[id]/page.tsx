@@ -24,8 +24,6 @@ import {
 import { getTeacherEarningThisMonth, COMP_TYPE_LABEL } from "@/lib/compensation";
 import { TeacherCompensationForm } from "@/components/teacher-compensation-form";
 import { addTeacherSubject, removeTeacherSubject } from "@/lib/class-actions";
-import { renderTemplate } from "@/lib/render-template";
-import { SendMessage } from "./send-message";
 import { Section } from "@/components/collapsible-section";
 import { EditSlotForm } from "@/components/program/edit-slot-form";
 import { SlotForm } from "@/components/program/slot-form";
@@ -298,32 +296,6 @@ export default async function KisiProfil({
     creditsUsed = await getStudentUsedThisMonth(id);
   }
   const ledger = showBilling ? await getStudentLedger(id) : null;
-
-  // Öğrenci profilinden WhatsApp mesajı için hazır şablonlar (kurumun türleri).
-  let messageTemplates: { id: string; name: string; rendered: string }[] = [];
-  if (showBilling && ledger) {
-    const { data: tpls } = await supabase
-      .from("message_templates")
-      .select("id, name, body")
-      .order("created_at", { ascending: true });
-    const { data: orgRow } = await supabase
-      .from("organizations")
-      .select("name")
-      .limit(1)
-      .maybeSingle();
-    const vars = {
-      ogrenci: person.full_name ?? person.username ?? "",
-      veli: person.guardian_name ?? "",
-      bakiye: formatTRY(Math.max(0, ledger.balance)),
-      ay: String(ledger.unpaidDueCount),
-      kurum: orgRow?.name ?? "",
-    };
-    messageTemplates = (tpls ?? []).map((t) => ({
-      id: t.id,
-      name: t.name,
-      rendered: renderTemplate(t.body, vars),
-    }));
-  }
 
   const monthLabel = (period: string) => {
     const [y, m] = period.split("-").map(Number);
@@ -863,10 +835,6 @@ export default async function KisiProfil({
               defaultDate={currentDate}
               defaultReceivedBy={viewer.full_name ?? viewer.username}
             />
-          </Section>
-
-          <Section title="Mesaj gönder">
-            <SendMessage studentId={person.id} templates={messageTemplates} />
           </Section>
 
           {ledger ? (

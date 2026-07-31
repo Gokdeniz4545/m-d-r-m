@@ -88,7 +88,7 @@ export function CreateUserForm({ branches }: { branches: Branch[] }) {
           {role === "student" ? (
             <>
               <Field label="Veli adı soyadı" name="guardianName" />
-              <Field label="Veli telefonu (WhatsApp)" name="guardianPhone" type="tel" placeholder="05xx xxx xx xx" />
+              <Field label="Veli telefonu" name="guardianPhone" type="tel" placeholder="05xx xxx xx xx" />
             </>
           ) : null}
           <p className="text-xs text-muted">
@@ -97,7 +97,7 @@ export function CreateUserForm({ branches }: { branches: Branch[] }) {
           </p>
           <label className="flex items-start gap-2.5 text-sm">
             <input type="checkbox" name="notifyConsent" defaultChecked className="mt-0.5 h-4 w-4 accent-primary" />
-            <span className="text-muted">Bildirim (WhatsApp/SMS/e-posta) onayı var (KVKK).</span>
+            <span className="text-muted">İletişim/bildirim onayı var (KVKK).</span>
           </label>
         </>
       )}

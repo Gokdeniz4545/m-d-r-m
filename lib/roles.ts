@@ -60,7 +60,6 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { href: "/dersler", label: "Ders ekle", icon: "ders" },
     { href: "/tahsilat", label: "Tahsilat", icon: "tahsilat" },
     { href: "/giderler", label: "Giderler", icon: "gider" },
-    { href: "/kurum/whatsapp", label: "WhatsApp", icon: "whatsapp" },
     { href: "/gundem", label: "Gündem", icon: "gundem" },
   ],
   branch_admin: [

@@ -108,7 +108,7 @@ export function RegistrationForm({
           inputMode="numeric"
           placeholder="12345678901"
         />
-        <Field label="Telefon (WhatsApp için)" name="phone" type="tel" placeholder="05xx xxx xx xx" />
+        <Field label="Telefon" name="phone" type="tel" placeholder="05xx xxx xx xx" />
         <Field label="E-posta (isteğe bağlı)" name="email" type="email" />
         <label className="label">
           Adres
@@ -128,7 +128,7 @@ export function RegistrationForm({
         <h2 className="section-title">Veli & bildirim</h2>
         <Field label="Veli adı soyadı" name="guardianName" />
         <Field
-          label="Veli telefonu (WhatsApp hatırlatmaları için)"
+          label="Veli telefonu"
           name="guardianPhone"
           type="tel"
           placeholder="05xx xxx xx xx"
@@ -141,8 +141,8 @@ export function RegistrationForm({
             className="mt-0.5 h-4 w-4 accent-primary"
           />
           <span className="text-muted">
-            Öğrenci/veli, ödeme ve ders hatırlatmalarının WhatsApp/SMS/e-posta ile
-            gönderilmesine onay veriyor (KVKK).
+            Öğrenci/veli, ödeme ve ders hatırlatmaları için iletişime
+            (telefon/SMS/e-posta) onay veriyor (KVKK).
           </span>
         </label>
       </section>
