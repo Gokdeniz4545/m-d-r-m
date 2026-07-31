@@ -96,22 +96,30 @@ export default async function KisiProfil({
   const teacherIds = [
     ...new Set(classes.map((c) => c.teacher_id).filter(Boolean) as string[]),
   ];
-  const subjectName = new Map<string, string>();
-  if (subjectIds.length > 0) {
-    const { data } = await supabase
-      .from("subjects")
-      .select("id, name")
-      .in("id", subjectIds);
-    (data ?? []).forEach((s) => subjectName.set(s.id, s.name));
-  }
-  const teacherName = new Map<string, string>();
-  if (teacherIds.length > 0) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name, username")
-      .in("id", teacherIds);
-    (data ?? []).forEach((p) => teacherName.set(p.id, p.full_name ?? p.username));
-  }
+  const [subjectName, teacherName] = await Promise.all([
+    (async () => {
+      const m = new Map<string, string>();
+      if (subjectIds.length > 0) {
+        const { data } = await supabase
+          .from("subjects")
+          .select("id, name")
+          .in("id", subjectIds);
+        (data ?? []).forEach((s) => m.set(s.id, s.name));
+      }
+      return m;
+    })(),
+    (async () => {
+      const m = new Map<string, string>();
+      if (teacherIds.length > 0) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("id, full_name, username")
+          .in("id", teacherIds);
+        (data ?? []).forEach((p) => m.set(p.id, p.full_name ?? p.username));
+      }
+      return m;
+    })(),
+  ]);
 
   const classIds = classes.map((c) => c.id);
   const nowDate = new Date();
@@ -137,12 +145,20 @@ export default async function KisiProfil({
   >();
   const nextByClass = new Map<string, { date: string; is_makeup: boolean }>();
   if (person.role === "student" && classIds.length > 0) {
-    const { data: slots } = await supabase
-      .from("schedule_slots")
-      .select("id, class_id, weekday, start_time, end_time")
-      .in("class_id", classIds)
-      .order("weekday");
-    (slots ?? []).forEach((s) => {
+    const [slotsRes, nsRes] = await Promise.all([
+      supabase
+        .from("schedule_slots")
+        .select("id, class_id, weekday, start_time, end_time")
+        .in("class_id", classIds)
+        .order("weekday"),
+      supabase
+        .from("sessions")
+        .select("class_id, date, is_makeup")
+        .in("class_id", classIds)
+        .gte("date", todayStr)
+        .order("date"),
+    ]);
+    (slotsRes.data ?? []).forEach((s) => {
       const a = slotsByClass.get(s.class_id) ?? [];
       a.push({
         id: s.id,
@@ -152,13 +168,7 @@ export default async function KisiProfil({
       });
       slotsByClass.set(s.class_id, a);
     });
-    const { data: ns } = await supabase
-      .from("sessions")
-      .select("class_id, date, is_makeup")
-      .in("class_id", classIds)
-      .gte("date", todayStr)
-      .order("date");
-    (ns ?? []).forEach((s) => {
+    (nsRes.data ?? []).forEach((s) => {
       if (!nextByClass.has(s.class_id))
         nextByClass.set(s.class_id, { date: s.date, is_makeup: s.is_makeup });
     });
@@ -170,21 +180,23 @@ export default async function KisiProfil({
   if (person.role === "teacher" && classIds.length > 0) {
     const first = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, "0")}-01`;
     const last = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, "0")}-31`;
-    const { count } = await supabase
-      .from("sessions")
-      .select("id", { count: "exact", head: true })
-      .in("class_id", classIds)
-      .gte("date", first)
-      .lte("date", last);
-    teacherMonthlyCount = count ?? 0;
-
-    const { data: past } = await supabase
-      .from("sessions")
-      .select("id, date, class_id")
-      .in("class_id", classIds)
-      .lte("date", todayStr)
-      .order("date", { ascending: false })
-      .limit(20);
+    const [cntRes, pastRes] = await Promise.all([
+      supabase
+        .from("sessions")
+        .select("id", { count: "exact", head: true })
+        .in("class_id", classIds)
+        .gte("date", first)
+        .lte("date", last),
+      supabase
+        .from("sessions")
+        .select("id, date, class_id")
+        .in("class_id", classIds)
+        .lte("date", todayStr)
+        .order("date", { ascending: false })
+        .limit(20),
+    ]);
+    teacherMonthlyCount = cntRes.count ?? 0;
+    const past = pastRes.data;
     const classNameById = new Map(classes.map((c) => [c.id, c.name]));
     teacherHistory = (past ?? []).map((s) => ({
       id: s.id,
@@ -273,29 +285,36 @@ export default async function KisiProfil({
     note: string | null;
     created_at: string;
   }[] = [];
+  let ledger: Awaited<ReturnType<typeof getStudentLedger>> | null = null;
   if (showBilling) {
-    const { data: subData } = await supabase
-      .from("subscriptions")
-      .select("monthly_fee, monthly_quota, total_months, start_date, opening_used, opening_balance, makeup_credits, billing_period")
-      .eq("student_id", id)
-      .maybeSingle();
-    sub = subData;
-    const { data: payData } = await supabase
-      .from("payments")
-      .select("id, amount, period_month, paid_at, note")
-      .eq("student_id", id)
-      .order("period_month", { ascending: false })
-      .limit(12);
-    payments = payData ?? [];
-    const { data: adjData } = await supabase
-      .from("adjustments")
-      .select("id, amount, note, created_at")
-      .eq("student_id", id)
-      .order("created_at", { ascending: false });
-    adjustments = adjData ?? [];
-    creditsUsed = await getStudentUsedThisMonth(id);
+    // Abonelik, ödemeler, düzeltmeler, kullanılan ders ve defter — hepsi
+    // birbirinden bağımsız; seri yerine paralel çalıştır.
+    const [subRes, payRes, adjRes, used, lg] = await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("monthly_fee, monthly_quota, total_months, start_date, opening_used, opening_balance, makeup_credits, billing_period")
+        .eq("student_id", id)
+        .maybeSingle(),
+      supabase
+        .from("payments")
+        .select("id, amount, period_month, paid_at, note")
+        .eq("student_id", id)
+        .order("period_month", { ascending: false })
+        .limit(12),
+      supabase
+        .from("adjustments")
+        .select("id, amount, note, created_at")
+        .eq("student_id", id)
+        .order("created_at", { ascending: false }),
+      getStudentUsedThisMonth(id),
+      getStudentLedger(id),
+    ]);
+    sub = subRes.data;
+    payments = payRes.data ?? [];
+    adjustments = adjRes.data ?? [];
+    creditsUsed = used;
+    ledger = lg;
   }
-  const ledger = showBilling ? await getStudentLedger(id) : null;
 
   const monthLabel = (period: string) => {
     const [y, m] = period.split("-").map(Number);
