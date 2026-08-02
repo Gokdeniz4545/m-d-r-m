@@ -16,39 +16,27 @@ export default async function OturumPage({
 
   const { data: session } = await supabase
     .from("sessions")
-    .select("id, class_id, date, start_time, end_time, is_makeup")
+    .select("id, student_id, teacher_id, date, start_time, end_time, is_makeup")
     .eq("id", id)
     .maybeSingle();
   if (!session) redirect("/takvim");
 
-  const { data: cls } = await supabase
-    .from("classes")
-    .select("name, subject_id")
-    .eq("id", session.class_id)
-    .maybeSingle();
-  let subjectName = "";
-  if (cls?.subject_id) {
-    const { data: subj } = await supabase
-      .from("subjects")
-      .select("name")
-      .eq("id", cls.subject_id)
-      .maybeSingle();
-    subjectName = subj?.name ?? "";
-  }
-
-  const { data: enr } = await supabase
-    .from("enrollments")
-    .select("student_id")
-    .eq("class_id", session.class_id);
-  const studentIds = (enr ?? []).map((e) => e.student_id);
+  const studentId = session.student_id as string | null;
+  const studentIds = studentId ? [studentId] : [];
 
   const nameById = new Map<string, string>();
-  if (studentIds.length > 0) {
+  let teacherName = "";
+  const lookupIds = [studentId, session.teacher_id].filter(Boolean) as string[];
+  if (lookupIds.length > 0) {
     const { data } = await supabase
       .from("profiles")
       .select("id, full_name, username")
-      .in("id", studentIds);
-    (data ?? []).forEach((p) => nameById.set(p.id, p.full_name ?? p.username));
+      .in("id", lookupIds);
+    (data ?? []).forEach((p) => {
+      const n = p.full_name ?? p.username;
+      if (p.id === studentId) nameById.set(p.id, n);
+      if (p.id === session.teacher_id) teacherName = n;
+    });
   }
 
   const { data: att } = await supabase
@@ -76,6 +64,7 @@ export default async function OturumPage({
     month: "long",
     year: "numeric",
   });
+  const title = studentId ? (nameById.get(studentId) ?? "Ders") : "Ders";
 
   return (
     <PanelShell title="Yoklama" profile={profile}>
@@ -87,9 +76,9 @@ export default async function OturumPage({
       </Link>
 
       <div className="card mb-6 p-4">
-        <div className="font-semibold">{cls?.name ?? "Ders"}</div>
+        <div className="font-semibold">{title}</div>
         <div className="text-sm text-muted">
-          {subjectName ? subjectName + " · " : ""}
+          {teacherName ? teacherName + " · " : ""}
           {dateLabel} · {session.start_time.slice(0, 5)}–
           {session.end_time.slice(0, 5)}
           {session.is_makeup ? " · Telafi" : ""}

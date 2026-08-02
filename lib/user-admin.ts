@@ -26,6 +26,7 @@ export type CreateUserInput = {
   guardianPhone?: string | null;
   tcKimlik?: string | null;
   address?: string | null;
+  teacherId?: string | null;
   role: UserRole;
   organizationId: string | null;
   branchIds?: string[];
@@ -89,6 +90,7 @@ export async function createAppUser(
     guardian_phone: input.guardianPhone?.trim() || null,
     tc_kimlik_no: input.tcKimlik?.trim() || null,
     address: input.address?.trim() || null,
+    teacher_id: input.role === "student" ? input.teacherId || null : null,
     role: input.role,
     is_active: true,
   });

@@ -14,23 +14,11 @@ export async function getTeacherWeeklyBusy(
   if (!teacherId) return [];
 
   const supabase = await createClient();
-  // Hem birincil öğretmen (classes.teacher_id) hem çoklu öğretmen (class_teachers)
-  const [{ data: primary }, { data: co }] = await Promise.all([
-    supabase.from("classes").select("id").eq("teacher_id", teacherId),
-    supabase.from("class_teachers").select("class_id").eq("teacher_id", teacherId),
-  ]);
-  const ids = [
-    ...new Set([
-      ...(primary ?? []).map((c) => c.id),
-      ...(co ?? []).map((c) => c.class_id),
-    ]),
-  ];
-  if (ids.length === 0) return [];
-
+  // Öğretmenin haftalık dolu saatleri: doğrudan slot.teacher_id üzerinden.
   const { data: slots } = await supabase
     .from("schedule_slots")
     .select("weekday, start_time, end_time")
-    .in("class_id", ids);
+    .eq("teacher_id", teacherId);
   return (slots ?? []).map((s) => ({
     weekday: s.weekday,
     start: s.start_time.slice(0, 5),

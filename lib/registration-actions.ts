@@ -20,7 +20,8 @@ function ymd(d: Date): string {
   ).padStart(2, "0")}`;
 }
 
-// Tek formdan tam öğrenci kaydı: öğrenci + branş + birebir ders + kayıt + abonelik + program.
+// Tek formdan öğrenci kaydı: öğrenci + öğretmen ataması + abonelik (ders hakkı) + haftalık program.
+// "Ders/branş" kavramı yok — öğrenci doğrudan bir öğretmene bağlanır (profiles.teacher_id).
 export async function registerStudent(
   _prev: State,
   formData: FormData,
@@ -41,8 +42,6 @@ export async function registerStudent(
   const tcKimlik = String(formData.get("tc_kimlik_no") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
   const notifyConsent = formData.get("notifyConsent") != null;
-  const subjectIdInput = String(formData.get("subjectId") ?? "");
-  const newSubject = String(formData.get("newSubject") ?? "").trim();
   const teacherId = String(formData.get("teacherId") ?? "");
   const monthlyFee = num(formData.get("monthly_fee"));
   const monthlyQuota = parseInt(String(formData.get("monthly_quota") ?? "0"), 10);
@@ -60,17 +59,12 @@ export async function registerStudent(
   const openingBalance = num(formData.get("opening_balance")) || 0;
   const makeupCredits =
     parseInt(String(formData.get("makeup_credits") ?? "0"), 10) || 0;
-  // Devir (bu ay önceden kullanılmış ders) geçişin YAPILDIĞI aya bağlanır —
-  // başlangıç tarihi geçmişe alınsa bile "bu ay" = şu anki aydır.
+  // Devir (bu ay önceden kullanılmış ders) geçişin YAPILDIĞI aya bağlanır.
   const curPeriod = new Date().toISOString().slice(0, 7);
 
   if (!branchId) return { error: "Şube seçilmeli.", ok: false };
   if (tcKimlik && !/^\d{11}$/.test(tcKimlik))
     return { error: "TC kimlik no 11 haneli olmalı.", ok: false };
-  const hasExistingSubject = subjectIdInput !== "" && subjectIdInput !== "__new__";
-  if (!hasExistingSubject && newSubject.length < 2) {
-    return { error: "Branş seçin veya yeni branş adı girin.", ok: false };
-  }
 
   // Şube yetkisi
   const supabase = await createClient();
@@ -95,7 +89,21 @@ export async function registerStudent(
   }
   if (!allowed) return { error: "Bu şubede yetkiniz yok.", ok: false };
 
-  // 1) Öğrenci hesabı
+  // Öğretmen (opsiyonel) — verildiyse aynı kurumda öğretmen olmalı.
+  let validTeacherId: string | null = null;
+  if (teacherId) {
+    const { data: t } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", teacherId)
+      .eq("role", "teacher")
+      .eq("organization_id", actor.organization_id!)
+      .maybeSingle();
+    if (!t) return { error: "Seçilen öğretmen bulunamadı.", ok: false };
+    validTeacherId = t.id;
+  }
+
+  // 1) Öğrenci hesabı (+ öğretmen ataması)
   const userRes = await createAppUser({
     username,
     password,
@@ -107,6 +115,7 @@ export async function registerStudent(
     guardianPhone,
     tcKimlik,
     address,
+    teacherId: validTeacherId,
     role: "student",
     organizationId: actor.organization_id,
     branchIds: [branchId],
@@ -115,73 +124,8 @@ export async function registerStudent(
   const studentId = userRes.userId;
 
   const admin = createAdminClient();
-  const rollback = async () => {
-    await admin.from("profiles").delete().eq("id", studentId);
-    await admin.auth.admin.deleteUser(studentId);
-  };
 
-  // 2) Branş: seçilen veya yeni
-  let subjectId: string;
-  let subjectName: string;
-  if (hasExistingSubject) {
-    const { data: s } = await admin
-      .from("subjects")
-      .select("id, name")
-      .eq("id", subjectIdInput)
-      .eq("organization_id", actor.organization_id!)
-      .maybeSingle();
-    if (!s) {
-      await rollback();
-      return { error: "Branş bulunamadı.", ok: false };
-    }
-    subjectId = s.id;
-    subjectName = s.name;
-  } else {
-    subjectName = newSubject;
-    const { data: existingSubject } = await admin
-      .from("subjects")
-      .select("id")
-      .eq("organization_id", actor.organization_id!)
-      .eq("name", subjectName)
-      .maybeSingle();
-    if (existingSubject) {
-      subjectId = existingSubject.id;
-    } else {
-      const { data: created, error } = await admin
-        .from("subjects")
-        .insert({ organization_id: actor.organization_id, name: subjectName })
-        .select("id")
-        .single();
-      if (error || !created) {
-        await rollback();
-        return { error: "Branş oluşturulamadı.", ok: false };
-      }
-      subjectId = created.id;
-    }
-  }
-
-  // 3) Birebir ders
-  const { data: cls, error: clsErr } = await admin
-    .from("classes")
-    .insert({
-      branch_id: branchId,
-      subject_id: subjectId,
-      teacher_id: teacherId || null,
-      name: `${subjectName} (${fullName})`,
-      type: "one_on_one",
-      capacity: 1,
-    })
-    .select("id")
-    .single();
-  if (clsErr || !cls) {
-    await rollback();
-    return { error: "Ders oluşturulamadı: " + (clsErr?.message ?? ""), ok: false };
-  }
-
-  // 4) Kayıt
-  await admin.from("enrollments").insert({ class_id: cls.id, student_id: studentId });
-
-  // 5) Abonelik
+  // 2) Abonelik (ders hakkı / telafi / borç)
   await admin.from("subscriptions").upsert(
     {
       student_id: studentId,
@@ -198,7 +142,7 @@ export async function registerStudent(
     { onConflict: "student_id" },
   );
 
-  // 5b) Kayıtta ödeme alındıysa kaydet
+  // 2b) Kayıtta ödeme alındıysa kaydet
   if (initialPayment > 0) {
     await admin.from("payments").insert({
       student_id: studentId,
@@ -208,12 +152,20 @@ export async function registerStudent(
     });
   }
 
-  // 6) Haftalık program + oturumlar (geçerli gün/saat girildiyse)
-  if (weekday >= 1 && weekday <= 7 && startTime && endTime && endTime > startTime) {
+  // 3) Haftalık program + oturumlar (öğretmen seçildiyse ve geçerli gün/saat girildiyse)
+  if (
+    validTeacherId &&
+    weekday >= 1 &&
+    weekday <= 7 &&
+    startTime &&
+    endTime &&
+    endTime > startTime
+  ) {
     const { data: slot } = await admin
       .from("schedule_slots")
       .insert({
-        class_id: cls.id,
+        student_id: studentId,
+        teacher_id: validTeacherId,
         weekday,
         start_time: startTime,
         end_time: endTime,
@@ -222,7 +174,8 @@ export async function registerStudent(
       .single();
     if (slot) {
       const rows: {
-        class_id: string;
+        student_id: string;
+        teacher_id: string;
         date: string;
         start_time: string;
         end_time: string;
@@ -234,7 +187,8 @@ export async function registerStudent(
         d.setDate(base.getDate() + i);
         if (isoWeekday(d) === weekday) {
           rows.push({
-            class_id: cls.id,
+            student_id: studentId,
+            teacher_id: validTeacherId,
             date: ymd(d),
             start_time: startTime,
             end_time: endTime,
@@ -243,19 +197,14 @@ export async function registerStudent(
         }
       }
       if (rows.length > 0) {
-        await admin
-          .from("sessions")
-          .upsert(rows, {
-            onConflict: "class_id,date,start_time",
-            ignoreDuplicates: true,
-          });
+        // Yeni öğrenci; çakışma yok — düz insert.
+        await admin.from("sessions").insert(rows);
       }
     }
   }
 
   revalidatePath("/kurum");
   revalidatePath("/sube");
-  revalidatePath("/dersler");
   revalidatePath("/takvim");
   return { error: null, ok: true, studentId };
 }

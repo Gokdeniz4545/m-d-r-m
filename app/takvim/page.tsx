@@ -81,40 +81,31 @@ export default async function TakvimPage({
 
   const { data: sessions } = await supabase
     .from("sessions")
-    .select("id, class_id, date, start_time, end_time, is_makeup")
+    .select("id, student_id, teacher_id, date, start_time, end_time, is_makeup")
     .gte("date", rangeStart)
     .lte("date", rangeEnd)
     .order("start_time");
 
-  const classIds = [...new Set((sessions ?? []).map((s) => s.class_id))];
-  const classInfo = new Map<string, { name: string; teacher: string | null }>();
-  if (classIds.length > 0) {
-    const { data: classes } = await supabase
-      .from("classes")
-      .select("id, name, teacher_id")
-      .in("id", classIds);
-    const teacherIds = [
-      ...new Set(
-        (classes ?? []).map((c) => c.teacher_id).filter(Boolean) as string[],
-      ),
-    ];
-    const teacherName = new Map<string, string>();
-    if (teacherIds.length > 0) {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, username")
-        .in("id", teacherIds);
-      (data ?? []).forEach((p) =>
-        teacherName.set(p.id, p.full_name ?? p.username),
-      );
-    }
-    (classes ?? []).forEach((c) =>
-      classInfo.set(c.id, {
-        name: c.name,
-        teacher: c.teacher_id ? (teacherName.get(c.teacher_id) ?? null) : null,
-      }),
-    );
+  // Oturum → öğrenci adı (+ öğretmen adı). class yerine öğrenci/öğretmen.
+  const personIds = [
+    ...new Set(
+      (sessions ?? [])
+        .flatMap((s) => [s.student_id, s.teacher_id])
+        .filter(Boolean) as string[],
+    ),
+  ];
+  const nameById = new Map<string, string>();
+  if (personIds.length > 0) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, username")
+      .in("id", personIds);
+    (data ?? []).forEach((p) => nameById.set(p.id, p.full_name ?? p.username));
   }
+  const infoOf = (s: { student_id: string | null; teacher_id: string | null }) => ({
+    name: s.student_id ? (nameById.get(s.student_id) ?? null) : null,
+    teacher: s.teacher_id ? (nameById.get(s.teacher_id) ?? null) : null,
+  });
 
   const byDay = new Map<string, typeof sessions>();
   (sessions ?? []).forEach((s) => {
@@ -209,7 +200,7 @@ export default async function TakvimPage({
           {(byDay.get(ymd(gridDays[0])) ?? []).length > 0 ? (
             <div className="flex flex-col gap-2">
               {(byDay.get(ymd(gridDays[0])) ?? []).map((s) => {
-                const info = classInfo.get(s.class_id);
+                const info = infoOf(s);
                 const content = (
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -273,7 +264,7 @@ export default async function TakvimPage({
                 {list.length > 0 ? (
                   <div className="flex flex-col gap-2">
                     {list.map((s) => {
-                      const info = classInfo.get(s.class_id);
+                      const info = infoOf(s);
                       const content = (
                         <>
                           <div className="font-medium">
@@ -345,7 +336,7 @@ export default async function TakvimPage({
                 </Link>
                 <div className="flex flex-col gap-0.5">
                   {list.slice(0, 3).map((s) => {
-                    const info = classInfo.get(s.class_id);
+                    const info = infoOf(s);
                     const text = `${s.start_time.slice(0, 5)} ${info?.name ?? "Ders"}`;
                     return canMark ? (
                       <Link

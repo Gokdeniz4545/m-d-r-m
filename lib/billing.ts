@@ -41,26 +41,20 @@ export async function getStudentUsedThisMonth(studentId: string): Promise<number
   const curPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   let used = 0;
-  const { data: enr } = await supabase
-    .from("enrollments")
-    .select("class_id")
-    .eq("student_id", studentId);
-  const cids = [...new Set((enr ?? []).map((e) => e.class_id))];
-  if (cids.length > 0) {
-    let q = supabase.from("sessions").select("id").in("class_id", cids).lte("date", ymd(now));
-    // Aylık modda yalnız içinde bulunulan ay; paket modunda tüm geçmiş.
-    if (mode !== "package") q = q.gte("date", `${curPeriod}-01`);
-    const { data: sess } = await q;
-    const sids = (sess ?? []).map((s) => s.id);
-    if (sids.length > 0) {
-      const { count } = await supabase
-        .from("attendance")
-        .select("id", { count: "exact", head: true })
-        .eq("student_id", studentId)
-        .in("session_id", sids)
-        .neq("status", "excused");
-      used = count ?? 0;
-    }
+  // İşlenen ders: doğrudan öğrencinin oturumları (sessions.student_id) üzerinden.
+  let q = supabase.from("sessions").select("id").eq("student_id", studentId).lte("date", ymd(now));
+  // Aylık modda yalnız içinde bulunulan ay; paket modunda tüm geçmiş.
+  if (mode !== "package") q = q.gte("date", `${curPeriod}-01`);
+  const { data: sess } = await q;
+  const sids = (sess ?? []).map((s) => s.id);
+  if (sids.length > 0) {
+    const { count } = await supabase
+      .from("attendance")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", studentId)
+      .in("session_id", sids)
+      .neq("status", "excused");
+    used = count ?? 0;
   }
 
   // Açılış devri (opening_used): paket modunda her zaman; aylık modda yalnız geçiş ayında.

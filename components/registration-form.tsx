@@ -16,7 +16,6 @@ type Teacher = {
   id: string;
   name: string;
   branchIds: string[];
-  subjectIds: string[];
 };
 
 function addHour(h: string): string {
@@ -27,18 +26,13 @@ function addHour(h: string): string {
 export function RegistrationForm({
   branches,
   teachers,
-  subjects,
 }: {
   branches: Branch[];
   teachers: Teacher[];
-  subjects: { id: string; name: string }[];
 }) {
   const [state, action, pending] = useActionState(registerStudent, initial);
   const [branchId, setBranchId] = useState(
     branches.length === 1 ? branches[0].id : "",
-  );
-  const [subjectChoice, setSubjectChoice] = useState(
-    subjects.length > 0 ? "" : "__new__",
   );
   const [teacherId, setTeacherId] = useState("");
   const [weekday, setWeekday] = useState("1");
@@ -62,12 +56,7 @@ export function RegistrationForm({
     return <p className="text-sm text-muted">Önce bir şube oluşturulmalı.</p>;
   }
 
-  const hasExistingSubject = subjectChoice !== "" && subjectChoice !== "__new__";
-  const branchTeachers = teachers.filter(
-    (t) =>
-      t.branchIds.includes(branchId) &&
-      (hasExistingSubject ? t.subjectIds.includes(subjectChoice) : true),
-  );
+  const branchTeachers = teachers.filter((t) => t.branchIds.includes(branchId));
 
   const selectSlot = (wd: number, h: string) => {
     setWeekday(String(wd));
@@ -148,36 +137,9 @@ export function RegistrationForm({
       </section>
 
       <section className="card flex flex-col gap-3 p-5">
-        <h2 className="section-title">Ders (birebir)</h2>
+        <h2 className="section-title">Öğretmen</h2>
         <label className="label">
-          Branş
-          <select
-            name="subjectId"
-            required
-            value={subjectChoice}
-            onChange={(e) => {
-              setSubjectChoice(e.target.value);
-              setTeacherId("");
-            }}
-            className="input"
-          >
-            <option value="" disabled>
-              Branş seçin
-            </option>
-            {subjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-            <option value="__new__">+ Yeni branş ekle</option>
-          </select>
-        </label>
-        {subjectChoice === "__new__" ? (
-          <Field label="Yeni branş adı" name="newSubject" required />
-        ) : null}
-        <label className="label">
-          Öğretmen{" "}
-          {hasExistingSubject ? "(bu branşı verenler)" : "(isteğe bağlı)"}
+          Öğretmen (isteğe bağlı)
           <select
             name="teacherId"
             value={teacherId}
@@ -192,17 +154,19 @@ export function RegistrationForm({
             ))}
           </select>
         </label>
-        {hasExistingSubject && branchTeachers.length === 0 ? (
+        {branchId && branchTeachers.length === 0 ? (
+          <p className="text-xs text-muted">Bu şubede öğretmen yok.</p>
+        ) : (
           <p className="text-xs text-muted">
-            Bu şubede bu branşı veren öğretmen yok.
+            Öğrenci bu öğretmene bağlanır; dersleri onun takviminde planlanır.
           </p>
-        ) : null}
+        )}
       </section>
 
       <section className="card flex flex-col gap-3 p-5">
-        <h2 className="section-title">Ücret & abonelik</h2>
-        <NumberField label="Aylık ücret (₺)" name="monthly_fee" />
-        <NumberField label="Aylık ders hakkı" name="monthly_quota" />
+        <h2 className="section-title">Ders hakkı & ücret</h2>
+        <NumberField label="Ücret (₺)" name="monthly_fee" />
+        <NumberField label="Ders hakkı (adet)" name="monthly_quota" />
         <NumberField label="Telafi ders hakkı" name="makeup_credits" />
         <NumberField
           label="Abonelik süresi (ay, 1-12)"
