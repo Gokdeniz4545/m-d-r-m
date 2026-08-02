@@ -2,84 +2,75 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
-import { CLASS_TYPE_LABEL, type ClassType } from "@/lib/roles";
+import { weekdayLabel } from "@/lib/roles";
 
 export default async function OgretmenDerslerim() {
   const profile = await requireRole(["teacher"]);
   const supabase = await createClient();
 
-  const { data: classes } = await supabase
-    .from("classes")
-    .select("id, name, type, capacity, subject_id")
+  const { data: students } = await supabase
+    .from("profiles")
+    .select("id, full_name, username, is_active")
     .eq("teacher_id", profile.id)
-    .order("created_at", { ascending: false });
+    .eq("role", "student")
+    .order("full_name");
+  const list = students ?? [];
+  const ids = list.map((s) => s.id);
 
-  const subjectIds = [...new Set((classes ?? []).map((c) => c.subject_id))];
-  const subjectName = new Map<string, string>();
-  if (subjectIds.length > 0) {
-    const { data } = await supabase
-      .from("subjects")
-      .select("id, name")
-      .in("id", subjectIds);
-    (data ?? []).forEach((s) => subjectName.set(s.id, s.name));
+  // Her öğrencinin haftalık programı (schedule_slots.student_id)
+  const slotsByStudent = new Map<
+    string,
+    { weekday: number; start_time: string }[]
+  >();
+  if (ids.length > 0) {
+    const { data: slots } = await supabase
+      .from("schedule_slots")
+      .select("student_id, weekday, start_time")
+      .in("student_id", ids)
+      .order("weekday");
+    (slots ?? []).forEach((s) => {
+      const a = slotsByStudent.get(s.student_id) ?? [];
+      a.push({ weekday: s.weekday, start_time: s.start_time });
+      slotsByStudent.set(s.student_id, a);
+    });
   }
-
-  const classIds = (classes ?? []).map((c) => c.id);
-  let enrollments: { class_id: string; student_id: string }[] = [];
-  if (classIds.length > 0) {
-    const { data } = await supabase
-      .from("enrollments")
-      .select("class_id, student_id")
-      .in("class_id", classIds);
-    enrollments = data ?? [];
-  }
-  const studentIds = [...new Set(enrollments.map((e) => e.student_id))];
-  const studentName = new Map<string, string>();
-  if (studentIds.length > 0) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name, username")
-      .in("id", studentIds);
-    (data ?? []).forEach((p) => studentName.set(p.id, p.full_name ?? p.username));
-  }
-  const studentsByClass = new Map<string, string[]>();
-  enrollments.forEach((e) => {
-    const arr = studentsByClass.get(e.class_id) ?? [];
-    arr.push(studentName.get(e.student_id) ?? "?");
-    studentsByClass.set(e.class_id, arr);
-  });
 
   return (
-    <PanelShell title="Derslerim" profile={profile}>
+    <PanelShell title="Öğrencilerim" profile={profile}>
       <Link
         href="/ogretmen"
         className="mb-4 inline-block text-sm text-muted hover:underline"
       >
         ← Panele dön
       </Link>
-      <h2 className="section-title mb-3">Derslerim ({classes?.length ?? 0})</h2>
-      {classes && classes.length > 0 ? (
+      <h2 className="section-title mb-3">Öğrencilerim ({list.length})</h2>
+      {list.length > 0 ? (
         <div className="flex flex-col gap-3">
-          {classes.map((c) => (
-            <div key={c.id} className="card p-4">
-              <div className="flex items-center justify-between">
-                <div className="font-medium">{c.name}</div>
-                <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-muted">
-                  {CLASS_TYPE_LABEL[c.type as ClassType]}
-                </span>
-              </div>
-              <div className="text-sm text-muted">
-                {subjectName.get(c.subject_id) ?? "?"}
-              </div>
-              <div className="mt-2 text-sm">
-                Öğrenciler ({studentsByClass.get(c.id)?.length ?? 0}):{" "}
-                {studentsByClass.get(c.id)?.join(", ") || "—"}
-              </div>
-            </div>
-          ))}
+          {list.map((s) => {
+            const prog = (slotsByStudent.get(s.id) ?? []).map(
+              (sl) => `${weekdayLabel(sl.weekday)} ${sl.start_time.slice(0, 5)}`,
+            );
+            return (
+              <Link
+                key={s.id}
+                href={`/kisi/${s.id}`}
+                className="card p-4 transition hover:border-primary/40 hover:bg-accent"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="font-medium">{s.full_name ?? s.username}</div>
+                  <span className="text-xs text-muted">
+                    {s.is_active ? "Aktif" : "Pasif"}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm text-muted">
+                  {prog.length > 0 ? prog.join(", ") : "Program girilmemiş"}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       ) : (
-        <p className="text-sm text-muted">Henüz size atanmış ders yok.</p>
+        <p className="text-sm text-muted">Henüz size atanmış öğrenci yok.</p>
       )}
     </PanelShell>
   );

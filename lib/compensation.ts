@@ -35,13 +35,6 @@ export async function getTeacherEarningThisMonth(
   }
 
   const supabase = await createClient();
-  const { data: cls } = await supabase
-    .from("classes")
-    .select("id")
-    .eq("teacher_id", teacherId);
-  const classIds = (cls ?? []).map((c) => c.id);
-  if (classIds.length === 0) return { comp, sessions: 0, earning: 0 };
-
   const now = new Date();
   const first = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const last = new Date(now.getFullYear(), now.getMonth() + 1, 0)
@@ -50,7 +43,7 @@ export async function getTeacherEarningThisMonth(
   const { count } = await supabase
     .from("sessions")
     .select("id", { count: "exact", head: true })
-    .in("class_id", classIds)
+    .eq("teacher_id", teacherId)
     .gte("date", first)
     .lte("date", last);
   const sessions = count ?? 0;

@@ -63,9 +63,9 @@ export default async function KurumSubeDetay({
           href={`/kurum/sube/${id}/kullanicilar`}
         />
         <ActionCard
-          title="Dersler"
-          description="Branşlar, dersler, kayıtlar"
-          href="/dersler"
+          title="Öğrenci kaydı"
+          description="Yeni öğrenci ekle"
+          href="/ogrenci-ekle"
         />
         <ActionCard title="Takvim" description="Ders programı" href="/takvim" />
         <ActionCard title="Raporlar" description="Ciro ve öğrenci grafikleri" href="/raporlar" />
