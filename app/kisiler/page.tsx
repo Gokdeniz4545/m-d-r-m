@@ -75,10 +75,9 @@ export default async function KisilerPage({
 
   // Şubeler
   const userBranches = new Map<string, string[]>();
-  // Ders/öğretmen/branş metadatası (arama için)
-  const studentClassIds = new Map<string, string[]>();
-  const teacherClassIds = new Map<string, string[]>();
-  const allClassIds = new Set<string>();
+  // Öğretmen/öğrenci adı metadatası (arama için)
+  const studentTeacher = new Map<string, string>();
+  const teacherStudentNames = new Map<string, string[]>();
 
   if (ids.length > 0) {
     const { data: mems } = await supabase
@@ -102,84 +101,53 @@ export default async function KisilerPage({
       userBranches.set(m.user_id, arr);
     });
 
-    const { data: enr } = await supabase
-      .from("enrollments")
-      .select("student_id, class_id")
-      .in("student_id", ids);
-    (enr ?? []).forEach((e) => {
-      const a = studentClassIds.get(e.student_id) ?? [];
-      a.push(e.class_id);
-      studentClassIds.set(e.student_id, a);
-      allClassIds.add(e.class_id);
-    });
-
-    const { data: tcls } = await supabase
-      .from("classes")
-      .select("id, teacher_id")
-      .in("teacher_id", ids);
-    (tcls ?? []).forEach((c) => {
-      if (!c.teacher_id) return;
-      const a = teacherClassIds.get(c.teacher_id) ?? [];
-      a.push(c.id);
-      teacherClassIds.set(c.teacher_id, a);
-      allClassIds.add(c.id);
-    });
-  }
-
-  const classMeta = new Map<
-    string,
-    { name: string; subjectId: string; teacherId: string | null }
-  >();
-  if (allClassIds.size > 0) {
-    const { data } = await supabase
-      .from("classes")
-      .select("id, name, subject_id, teacher_id")
-      .in("id", [...allClassIds]);
-    (data ?? []).forEach((c) =>
-      classMeta.set(c.id, {
-        name: c.name,
-        subjectId: c.subject_id,
-        teacherId: c.teacher_id,
-      }),
-    );
-  }
-  const subjectIds = new Set<string>();
-  const teacherIds = new Set<string>();
-  classMeta.forEach((c) => {
-    subjectIds.add(c.subjectId);
-    if (c.teacherId) teacherIds.add(c.teacherId);
-  });
-  const subjectName = new Map<string, string>();
-  if (subjectIds.size > 0) {
-    const { data } = await supabase
-      .from("subjects")
-      .select("id, name")
-      .in("id", [...subjectIds]);
-    (data ?? []).forEach((s) => subjectName.set(s.id, s.name));
-  }
-  const teacherName = new Map<string, string>();
-  if (teacherIds.size > 0) {
-    const { data } = await supabase
+    // Öğrenci kayıtlarının öğretmen adı + öğretmen kayıtlarının öğrenci adları
+    const { data: studs } = await supabase
       .from("profiles")
-      .select("id, full_name, username")
-      .in("id", [...teacherIds]);
-    (data ?? []).forEach((p) => teacherName.set(p.id, p.full_name ?? p.username));
+      .select("id, teacher_id")
+      .in("id", ids)
+      .eq("role", "student");
+    const teacherIdsInList = people
+      .filter((p) => p.role === "teacher")
+      .map((p) => p.id);
+    const refTeacherIds = [
+      ...new Set([
+        ...((studs ?? []).map((s) => s.teacher_id).filter(Boolean) as string[]),
+        ...teacherIdsInList,
+      ]),
+    ];
+    const tName = new Map<string, string>();
+    if (refTeacherIds.length > 0) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, username")
+        .in("id", refTeacherIds);
+      (data ?? []).forEach((t) => tName.set(t.id, t.full_name ?? t.username));
+    }
+    (studs ?? []).forEach((s) => {
+      if (s.teacher_id) studentTeacher.set(s.id, tName.get(s.teacher_id) ?? "");
+    });
+    if (teacherIdsInList.length > 0) {
+      const { data: theirStudents } = await supabase
+        .from("profiles")
+        .select("id, full_name, username, teacher_id")
+        .in("teacher_id", teacherIdsInList)
+        .eq("role", "student");
+      (theirStudents ?? []).forEach((s) => {
+        if (!s.teacher_id) return;
+        const a = teacherStudentNames.get(s.teacher_id) ?? [];
+        a.push(s.full_name ?? s.username);
+        teacherStudentNames.set(s.teacher_id, a);
+      });
+    }
   }
 
   const peopleOut = people.map((p) => {
     const parts: string[] = [p.full_name ?? "", p.username];
     (userBranches.get(p.id) ?? []).forEach((b) => parts.push(b));
-    const cids = [
-      ...(studentClassIds.get(p.id) ?? []),
-      ...(teacherClassIds.get(p.id) ?? []),
-    ];
-    cids.forEach((cid) => {
-      const c = classMeta.get(cid);
-      if (!c) return;
-      parts.push(c.name);
-      parts.push(subjectName.get(c.subjectId) ?? "");
-      if (c.teacherId) parts.push(teacherName.get(c.teacherId) ?? "");
-    });
+    const t = studentTeacher.get(p.id);
+    if (t) parts.push(t);
+    (teacherStudentNames.get(p.id) ?? []).forEach((n) => parts.push(n));
     return {
       id: p.id,
       name: p.full_name ?? p.username,

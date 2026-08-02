@@ -24,15 +24,9 @@ export default async function OgretmenEkle() {
     }
   }
 
-  const { data: subjectsData } = await supabase
-    .from("subjects")
-    .select("id, name")
-    .order("name");
-  const subjects = subjectsData ?? [];
-
   return (
     <PanelShell title="Öğretmen ekle" profile={profile}>
-      <QuickAddUserForm role="teacher" branches={branches} subjects={subjects} />
+      <QuickAddUserForm role="teacher" branches={branches} />
     </PanelShell>
   );
 }

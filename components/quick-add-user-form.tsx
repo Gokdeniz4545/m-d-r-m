@@ -11,11 +11,9 @@ type Branch = { id: string; name: string };
 export function QuickAddUserForm({
   role,
   branches,
-  subjects = [],
 }: {
   role: "student" | "teacher";
   branches: Branch[];
-  subjects?: { id: string; name: string }[];
 }) {
   const [state, action, pending] = useActionState(quickAddUser, initial);
   const [compType, setCompType] = useState<"per_session" | "monthly">(
@@ -79,28 +77,6 @@ export function QuickAddUserForm({
 
       {role === "teacher" ? (
         <>
-          {subjects.length > 0 ? (
-            <div className="label">
-              Verebileceği branşlar
-              <div className="flex flex-wrap gap-2">
-                {subjects.map((s) => (
-                  <label
-                    key={s.id}
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-accent"
-                  >
-                    <input
-                      type="checkbox"
-                      name="subjects"
-                      value={s.id}
-                      className="h-4 w-4 accent-primary"
-                    />
-                    {s.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
           <div className="label">
             Maaş / hakediş tipi
             <div className="flex gap-2">

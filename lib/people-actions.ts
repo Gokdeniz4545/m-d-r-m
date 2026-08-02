@@ -99,17 +99,8 @@ export async function quickAddUser(
   });
   if (!res.ok) return { error: res.error, ok: false };
 
-  // Öğretmen ise: verebileceği branşlar + hakediş ayarı
+  // Öğretmen ise: hakediş ayarı
   if (role === "teacher") {
-    const subjectIds = formData
-      .getAll("subjects")
-      .map((s) => String(s))
-      .filter(Boolean);
-    if (subjectIds.length > 0) {
-      await supabase.from("teacher_subjects").insert(
-        subjectIds.map((sid) => ({ teacher_id: res.userId, subject_id: sid })),
-      );
-    }
     const compType = String(formData.get("comp_type") ?? "");
     const rate = Number(String(formData.get("rate") ?? "").replace(",", "."));
     if (["per_session", "monthly"].includes(compType) && rate >= 0) {
