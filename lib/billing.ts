@@ -6,10 +6,37 @@ function ymd(d: Date): string {
   ).padStart(2, "0")}`;
 }
 
-// Öğrencinin bu ay kullandığı ders hakkı = bu aya ait oturumlardaki
-// yoklama kayıtları (izinli hariç). Yoklama girilmemiş ders hak düşürmez.
+// Kurumun faturalama modu. 'package' = ders paketi (aylık tahakkuk yok);
+// 'monthly' = aylık abonelik (varsayılan). Sütun yoksa (migration öncesi) güvenli
+// varsayılan 'monthly' döner.
+export type BillingMode = "monthly" | "package";
+
+export async function getStudentBillingMode(
+  studentId: string,
+): Promise<BillingMode> {
+  const supabase = await createClient();
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (!prof?.organization_id) return "monthly";
+  const { data: org, error } = await supabase
+    .from("organizations")
+    .select("billing_mode")
+    .eq("id", prof.organization_id)
+    .maybeSingle();
+  if (error) return "monthly";
+  return org?.billing_mode === "package" ? "package" : "monthly";
+}
+
+// Öğrencinin kullandığı ders hakkı (izinli hariç yoklama kayıtları).
+// Aylık modda: yalnız bu aya ait oturumlar + geçiş ayı devri (opening_used).
+// Paket modunda: paket boyunca KÜMÜLATİF (tüm tarihli oturumlar) + opening_used
+// her zaman (paket aylık sıfırlanmaz). Yoklama girilmemiş ders hak düşürmez.
 export async function getStudentUsedThisMonth(studentId: string): Promise<number> {
   const supabase = await createClient();
+  const mode = await getStudentBillingMode(studentId);
   const now = new Date();
   const curPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
@@ -20,13 +47,10 @@ export async function getStudentUsedThisMonth(studentId: string): Promise<number
     .eq("student_id", studentId);
   const cids = [...new Set((enr ?? []).map((e) => e.class_id))];
   if (cids.length > 0) {
-    const first = `${curPeriod}-01`;
-    const { data: sess } = await supabase
-      .from("sessions")
-      .select("id")
-      .in("class_id", cids)
-      .gte("date", first)
-      .lte("date", ymd(now));
+    let q = supabase.from("sessions").select("id").in("class_id", cids).lte("date", ymd(now));
+    // Aylık modda yalnız içinde bulunulan ay; paket modunda tüm geçmiş.
+    if (mode !== "package") q = q.gte("date", `${curPeriod}-01`);
+    const { data: sess } = await q;
     const sids = (sess ?? []).map((s) => s.id);
     if (sids.length > 0) {
       const { count } = await supabase
@@ -39,13 +63,13 @@ export async function getStudentUsedThisMonth(studentId: string): Promise<number
     }
   }
 
-  // Açılış devri (geçiş ayı): önceden kullanılmış dersleri bu ay için ekle
+  // Açılış devri (opening_used): paket modunda her zaman; aylık modda yalnız geçiş ayında.
   const { data: sub } = await supabase
     .from("subscriptions")
     .select("opening_used, opening_period")
     .eq("student_id", studentId)
     .maybeSingle();
-  if (sub?.opening_used && sub.opening_period === curPeriod) {
+  if (sub?.opening_used && (mode === "package" || sub.opening_period === curPeriod)) {
     used += Number(sub.opening_used);
   }
   return used;
@@ -107,11 +131,13 @@ export type StudentLedger = {
   adjustmentsTotal: number; // manuel bakiye düzeltmeleri toplamı (işaretli)
   balance: number; // > 0 → borçlu, < 0 → alacaklı (fazla ödeme)
   unpaidDueCount: number;
+  billingMode: BillingMode;
 };
 
 // Tek öğrencinin ay ay cari hesabı.
 export async function getStudentLedger(studentId: string): Promise<StudentLedger> {
   const supabase = await createClient();
+  const mode = await getStudentBillingMode(studentId);
   const { data: sub } = await supabase
     .from("subscriptions")
     .select("monthly_fee, total_months, start_date, status, opening_balance")
@@ -142,12 +168,30 @@ export async function getStudentLedger(studentId: string): Promise<StudentLedger
       adjustmentsTotal,
       balance: adjustmentsTotal - totalPaid,
       unpaidDueCount: 0,
+      billingMode: mode,
     };
   }
   const openingBalance = Number(sub.opening_balance ?? 0);
-
   const monthlyFee = Number(sub.monthly_fee);
   const totalMonths = Number(sub.total_months) || 1;
+
+  // Paket modu: aylık tahakkuk yok. Bakiye = devir(borç) − ödeme + düzeltme.
+  if (mode === "package") {
+    return {
+      hasSubscription: true,
+      monthlyFee,
+      totalMonths,
+      periods: [],
+      dueExpected: 0,
+      totalPaid,
+      openingBalance,
+      adjustmentsTotal,
+      balance: openingBalance - totalPaid + adjustmentsTotal,
+      unpaidDueCount: 0,
+      billingMode: "package",
+    };
+  }
+
   const start = new Date(sub.start_date);
   const startY = start.getFullYear();
   const startM = start.getMonth();
@@ -196,6 +240,7 @@ export async function getStudentLedger(studentId: string): Promise<StudentLedger
     adjustmentsTotal,
     balance,
     unpaidDueCount,
+    billingMode: "monthly",
   };
 }
 
@@ -239,9 +284,20 @@ export async function getOutstanding(): Promise<{
 
   const { data: profs } = await supabase
     .from("profiles")
-    .select("id, full_name, username, phone, role")
+    .select("id, full_name, username, phone, role, organization_id")
     .in("id", ids);
   const profById = new Map((profs ?? []).map((p) => [p.id, p]));
+
+  // İlgili kurumların faturalama modları (paket kurumda aylık tahakkuk yok).
+  const orgIds = [...new Set((profs ?? []).map((p) => p.organization_id).filter(Boolean))];
+  const modeByOrg = new Map<string, string>();
+  if (orgIds.length > 0) {
+    const { data: orgs, error } = await supabase
+      .from("organizations")
+      .select("id, billing_mode")
+      .in("id", orgIds);
+    if (!error) for (const o of orgs ?? []) modeByOrg.set(o.id, o.billing_mode);
+  }
 
   const now = new Date();
   const rows: OutstandingRow[] = [];
@@ -249,7 +305,10 @@ export async function getOutstanding(): Promise<{
     const prof = profById.get(s.student_id);
     if (!prof || prof.role !== "student") continue;
     const fee = Number(s.monthly_fee);
-    const dueCount = duePeriodsCount(s.start_date, Number(s.total_months) || 1, now);
+    const isPackage = modeByOrg.get(prof.organization_id) === "package";
+    const dueCount = isPackage
+      ? 0
+      : duePeriodsCount(s.start_date, Number(s.total_months) || 1, now);
     const opening = Number(s.opening_balance ?? 0);
     const balance =
       opening +
@@ -262,7 +321,7 @@ export async function getOutstanding(): Promise<{
         name: prof.full_name ?? prof.username,
         phone: prof.phone,
         balance,
-        unpaidMonths: fee > 0 ? Math.round(balance / fee) : 0,
+        unpaidMonths: isPackage || fee <= 0 ? 0 : Math.round(balance / fee),
       });
     }
   }

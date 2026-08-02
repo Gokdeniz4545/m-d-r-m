@@ -328,6 +328,7 @@ export default async function KisiProfil({
   const currentDate = `${currentPeriod}-${String(now.getDate()).padStart(2, "0")}`;
   const quota = sub?.monthly_quota ?? 0;
   const remaining = quota - creditsUsed;
+  const pkg = ledger?.billingMode === "package";
 
   // Ödeme geçmişi + bakiye düzeltmeleri birleşik, tarihe göre
   const history = [
@@ -748,7 +749,7 @@ export default async function KisiProfil({
                 </div>
                 {ledger.balance > 0.5 ? (
                   <div className="mt-1 text-sm text-muted">
-                    {ledger.unpaidDueCount} ay ödenmemiş
+                    {pkg ? "Ödenmemiş bakiye" : `${ledger.unpaidDueCount} ay ödenmemiş`}
                   </div>
                 ) : (
                   <div className="mt-1 text-sm text-muted">Ödemeler güncel</div>
@@ -763,12 +764,14 @@ export default async function KisiProfil({
                     </span>
                   </div>
                 ) : null}
-                <div>
-                  Tahakkuk:{" "}
-                  <span className="tabular font-medium text-foreground">
-                    {formatTRY(ledger.dueExpected)}
-                  </span>
-                </div>
+                {pkg ? null : (
+                  <div>
+                    Tahakkuk:{" "}
+                    <span className="tabular font-medium text-foreground">
+                      {formatTRY(ledger.dueExpected)}
+                    </span>
+                  </div>
+                )}
                 <div>
                   Ödenen:{" "}
                   <span className="tabular font-medium text-foreground">
@@ -816,17 +819,17 @@ export default async function KisiProfil({
           <Section title="Abonelik & ödeme">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <div className="card p-4">
-              <div className="text-sm text-muted">Aylık ücret</div>
+              <div className="text-sm text-muted">{pkg ? "Paket ücreti" : "Aylık ücret"}</div>
               <div className="mt-1 text-2xl font-bold">
                 {sub ? `${Number(sub.monthly_fee)} ₺` : "—"}
               </div>
             </div>
             <div className="card p-4">
-              <div className="text-sm text-muted">Aylık ders hakkı</div>
+              <div className="text-sm text-muted">{pkg ? "Ders hakkı" : "Aylık ders hakkı"}</div>
               <div className="mt-1 text-2xl font-bold">{quota}</div>
             </div>
             <div className="card p-4">
-              <div className="text-sm text-muted">Bu ay kullanılan</div>
+              <div className="text-sm text-muted">{pkg ? "Kullanılan" : "Bu ay kullanılan"}</div>
               <div className="mt-1 text-2xl font-bold">{creditsUsed}</div>
             </div>
             <div className="card p-4">
