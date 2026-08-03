@@ -17,7 +17,13 @@ function ymd(d: Date): string {
 export default async function TakvimPage({
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string; g?: string; d?: string; t?: string }>;
+  searchParams: Promise<{
+    h?: string;
+    g?: string;
+    d?: string;
+    t?: string;
+    mk?: string;
+  }>;
 }) {
   const profile = await requireRole([
     "org_admin",
@@ -150,6 +156,13 @@ export default async function TakvimPage({
       studentName: s.student_id ? (nameById.get(s.student_id) ?? "") : "",
     }));
   const daygridWeekday = ((gridDays[0].getDay() + 6) % 7) + 1;
+  const makeupStudentId =
+    showGrid && sp.mk && daygridStudents.some((s) => s.id === sp.mk)
+      ? sp.mk
+      : null;
+  const makeupStudentName = makeupStudentId
+    ? (daygridStudents.find((s) => s.id === makeupStudentId)?.name ?? null)
+    : null;
 
   const byDay = new Map<string, typeof sessions>();
   (sessions ?? []).forEach((s) => {
@@ -258,14 +271,24 @@ export default async function TakvimPage({
 
       {view === "gun" ? (
         showGrid ? (
-          <DayGrid
-            date={ymd(gridDays[0])}
-            weekday={daygridWeekday}
-            teacherId={teacherId}
-            students={daygridStudents}
-            sessions={daygridSessions}
-            canMark={canMark}
-          />
+          <>
+            {makeupStudentName ? (
+              <div className="mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+                Telafi planlama: <strong>{makeupStudentName}</strong> için boş bir
+                slota tıkla → telafi dersi eklenir.
+              </div>
+            ) : null}
+            <DayGrid
+              date={ymd(gridDays[0])}
+              weekday={daygridWeekday}
+              teacherId={teacherId}
+              students={daygridStudents}
+              sessions={daygridSessions}
+              canMark={canMark}
+              makeupStudentId={makeupStudentId}
+              makeupStudentName={makeupStudentName}
+            />
+          </>
         ) : (
         <div className="card p-4">
           {(byDay.get(ymd(gridDays[0])) ?? []).length > 0 ? (

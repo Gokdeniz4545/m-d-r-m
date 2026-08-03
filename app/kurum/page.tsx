@@ -4,11 +4,14 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { ActionCard } from "@/components/dashboard/action-card";
 import { getOrgStats } from "@/lib/dashboard-data";
 import { getOutstanding, formatTRY } from "@/lib/billing";
+import { getMakeupPool } from "@/lib/makeup";
+import { MakeupPoolCard } from "@/components/makeup-pool-card";
 
 export default async function KurumHome() {
   const profile = await requireRole(["org_admin"]);
   const stats = await getOrgStats();
   const { total: outstanding, rows: debtors } = await getOutstanding();
+  const makeupPool = await getMakeupPool();
 
   return (
     <PanelShell title="Kurum Paneli" profile={profile}>
@@ -46,6 +49,10 @@ export default async function KurumHome() {
           href="/tahsilat"
           icon="tahsilat"
         />
+      </div>
+
+      <div className="mt-6">
+        <MakeupPoolCard pool={makeupPool} />
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">

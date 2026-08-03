@@ -31,6 +31,8 @@ export function DayGrid({
   students,
   sessions,
   canMark,
+  makeupStudentId = null,
+  makeupStudentName = null,
 }: {
   date: string;
   weekday: number;
@@ -38,6 +40,8 @@ export function DayGrid({
   students: Student[];
   sessions: Sess[];
   canMark: boolean;
+  makeupStudentId?: string | null;
+  makeupStudentName?: string | null;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [state, action, pending] = useActionState(planLesson, initial);
@@ -121,33 +125,46 @@ export function DayGrid({
           className="mt-4 flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3"
         >
           <div className="text-sm font-medium">
-            {date} · {selected} — ders planla (45 dk)
+            {makeupStudentId
+              ? `Telafi dersi: ${makeupStudentName ?? ""}`
+              : "Ders planla"}{" "}
+            — {date} · {selected} (45 dk)
           </div>
           <input type="hidden" name="teacherId" value={teacherId} />
           <input type="hidden" name="date" value={date} />
           <input type="hidden" name="weekday" value={weekday} />
           <input type="hidden" name="start_time" value={selected} />
-          <label className="label">
-            Öğrenci
-            <select name="studentId" required className="input">
-              <option value="">Seç</option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <label className="flex items-center gap-1.5">
-              <input type="radio" name="mode" value="weekly" defaultChecked className="accent-primary" />
-              Her hafta ({weekdayLabel(weekday)})
-            </label>
-            <label className="flex items-center gap-1.5">
-              <input type="radio" name="mode" value="oneoff" className="accent-primary" />
-              Sadece bu gün
-            </label>
-          </div>
+          {makeupStudentId ? (
+            <>
+              <input type="hidden" name="studentId" value={makeupStudentId} />
+              <input type="hidden" name="mode" value="oneoff" />
+              <input type="hidden" name="is_makeup" value="on" />
+            </>
+          ) : (
+            <>
+              <label className="label">
+                Öğrenci
+                <select name="studentId" required className="input">
+                  <option value="">Seç</option>
+                  {students.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex flex-wrap gap-4 text-sm">
+                <label className="flex items-center gap-1.5">
+                  <input type="radio" name="mode" value="weekly" defaultChecked className="accent-primary" />
+                  Her hafta ({weekdayLabel(weekday)})
+                </label>
+                <label className="flex items-center gap-1.5">
+                  <input type="radio" name="mode" value="oneoff" className="accent-primary" />
+                  Sadece bu gün
+                </label>
+              </div>
+            </>
+          )}
           {state.error ? <p className="text-sm text-danger">{state.error}</p> : null}
           {state.ok ? (
             <p className="text-sm text-emerald-600 dark:text-emerald-400">

@@ -103,7 +103,6 @@ export type AttendanceStatus = "present" | "absent" | "excused" | "late";
 
 export const ATTENDANCE_OPTIONS: { value: AttendanceStatus; label: string }[] = [
   { value: "present", label: "Geldi" },
-  { value: "late", label: "Geç" },
   { value: "excused", label: "İzinli" },
   { value: "absent", label: "Gelmedi" },
 ];

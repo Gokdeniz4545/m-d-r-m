@@ -13,11 +13,19 @@ export async function markAttendance(formData: FormData): Promise<void> {
   const studentId = String(formData.get("studentId") ?? "");
   const status = String(formData.get("status") ?? "");
   if (!sessionId || !studentId) return;
-  if (!["present", "absent", "excused", "late"].includes(status)) return;
+  // Durumlar: Geldi / Gelmedi / İzinli ("geç geldi" kaldırıldı)
+  if (!["present", "absent", "excused"].includes(status)) return;
 
   const supabase = await createClient();
 
-  // Önceki durumu oku (telafi hakkı düşme/iade için)
+  // Oturum telafi mi? + önceki yoklama durumu (telafi hakkı hesabı için)
+  const { data: sess } = await supabase
+    .from("sessions")
+    .select("is_makeup")
+    .eq("id", sessionId)
+    .maybeSingle();
+  const isMakeup = !!sess?.is_makeup;
+
   const { data: prev } = await supabase
     .from("attendance")
     .select("status")
@@ -37,15 +45,20 @@ export async function markAttendance(formData: FormData): Promise<void> {
     { onConflict: "session_id,student_id" },
   );
 
-  // Telafi ders hakkı: "izinli"ye geçince 1 düş (min 0), izinliden çıkınca 1 iade.
-  // subscriptions güncellemesi RLS'i aşmak için admin client ile (öğretmen de işaretleyebilir).
-  const delta =
-    status === "excused" && prevStatus !== "excused"
-      ? -1
-      : prevStatus === "excused" && status !== "excused"
-        ? 1
-        : 0;
+  // Telafi hakkı (makeup_credits):
+  //  - Normal derste "İzinli" → +1 (öğrenci telafi hak eder, havuza düşer); izinliden çıkınca -1.
+  //  - Telafi dersinde "Geldi" → -1 (telafi tüketildi); geldiden çıkınca +1.
+  // Ders hakkı (işlenen) ayrı hesaplanır: izinli hariç yoklamalar (bkz. getStudentUsedThisMonth).
+  let delta = 0;
+  if (!isMakeup) {
+    if (status === "excused" && prevStatus !== "excused") delta = 1;
+    else if (prevStatus === "excused" && status !== "excused") delta = -1;
+  } else {
+    if (status === "present" && prevStatus !== "present") delta = -1;
+    else if (prevStatus === "present" && status !== "present") delta = 1;
+  }
   if (delta !== 0) {
+    // subscriptions güncellemesi RLS'i aşmak için admin (öğretmen de işaretleyebilir).
     const admin = createAdminClient();
     const { data: sub } = await admin
       .from("subscriptions")
@@ -63,4 +76,6 @@ export async function markAttendance(formData: FormData): Promise<void> {
 
   revalidatePath(`/oturum/${sessionId}`);
   revalidatePath(`/kisi/${studentId}`);
+  revalidatePath("/kurum");
+  revalidatePath("/sube");
 }
