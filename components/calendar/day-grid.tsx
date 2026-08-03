@@ -112,7 +112,7 @@ export function DayGrid({
                         <div className="min-w-0">
                           <div className="font-medium">{sc.s.studentName || "Öğrenci"}</div>
                           <div className="text-xs text-muted">
-                            {sc.s.start_time.slice(0, 5)}–{sc.s.end_time.slice(0, 5)}
+                            {sc.s.start_time.slice(0, 5)}
                             {sc.s.is_makeup ? " · Telafi" : ""}
                           </div>
                         </div>
@@ -191,17 +191,18 @@ export function DayGrid({
                       <button
                         type="button"
                         onClick={() => setSelected(t)}
+                        title={`${t} — ekle`}
                         className={
-                          "h-5 w-full rounded border border-dashed text-[11px] leading-none transition " +
+                          "h-6 w-full rounded border border-dashed text-[11px] leading-none transition " +
                           (selected === t
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-transparent text-transparent hover:border-primary/40 hover:text-primary/60")
+                            : "border-border/70 text-muted/50 hover:border-primary/60 hover:bg-primary/5 hover:text-primary")
                         }
                       >
-                        {selected === t ? "seçildi" : "+"}
+                        {selected === t ? "seçildi" : "+ ekle"}
                       </button>
                     ) : (
-                      <div className="h-5" />
+                      <div className="h-6" />
                     )}
                   </td>
                 )}

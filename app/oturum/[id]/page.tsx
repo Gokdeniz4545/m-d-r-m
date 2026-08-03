@@ -95,8 +95,7 @@ export default async function OturumPage({
         <div className="font-semibold">{title}</div>
         <div className="text-sm text-muted">
           {teacherName ? teacherName + " · " : ""}
-          {dateLabel} · {session.start_time.slice(0, 5)}–
-          {session.end_time.slice(0, 5)}
+          {dateLabel} · {session.start_time.slice(0, 5)}
           {session.is_makeup ? " · Telafi" : ""}
         </div>
       </div>

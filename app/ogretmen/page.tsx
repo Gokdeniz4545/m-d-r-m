@@ -59,7 +59,7 @@ export default async function OgretmenHome() {
             >
               <div className="min-w-0">
                 <div className="tabular font-semibold">
-                  {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
+                  {s.start_time.slice(0, 5)}
                 </div>
                 <div className="text-sm">
                   {s.student_id ? (studentName.get(s.student_id) ?? "Öğrenci") : "Öğrenci"}

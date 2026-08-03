@@ -415,7 +415,7 @@ export default async function KisiProfil({
                 ? studentSlots
                     .map(
                       (s) =>
-                        `Her ${weekdayLabel(s.weekday)} ${s.start_time.slice(0, 5)}–${s.end_time.slice(0, 5)}`,
+                        `Her ${weekdayLabel(s.weekday)} ${s.start_time.slice(0, 5)}`,
                     )
                     .join(", ")
                 : "Program girilmemiş"}

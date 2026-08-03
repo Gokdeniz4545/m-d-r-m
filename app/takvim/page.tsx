@@ -355,7 +355,7 @@ export default async function TakvimPage({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="tabular font-medium">
-                        {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
+                        {s.start_time.slice(0, 5)}
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-muted">
                         {dots(s.id)}
@@ -432,7 +432,7 @@ export default async function TakvimPage({
                       const content = (
                         <>
                           <div className="font-medium">
-                            {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
+                            {s.start_time.slice(0, 5)}
                           </div>
                           <div className="flex items-center gap-1 text-muted">
                             {dots(s.id)}
