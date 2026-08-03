@@ -65,8 +65,6 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { href: "/sube", label: "Panel", icon: "panel" },
     { href: "/ogrenci-ekle", label: "Öğrenci kaydı", icon: "ogrenciEkle" },
     { href: "/ogretmen-ekle", label: "Öğretmen ekle", icon: "ogretmenEkle" },
-    { href: "/tahsilat", label: "Tahsilat", icon: "tahsilat" },
-    { href: "/giderler", label: "Giderler", icon: "gider" },
     { href: "/gundem", label: "Gündem", icon: "gundem" },
   ],
   teacher: [

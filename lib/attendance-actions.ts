@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudentUsedThisMonth } from "@/lib/billing";
 
 export async function markAttendance(formData: FormData): Promise<void> {
   const p = await getSessionProfile();
@@ -74,8 +75,28 @@ export async function markAttendance(formData: FormData): Promise<void> {
     }
   }
 
+  // Ders hakkı bitti mi? auto_renew KAPALIYSA öğrenci pasife düşer (son "Geldi/Gelmedi").
+  if (status !== "excused") {
+    const admin = createAdminClient();
+    const { data: sub2 } = await admin
+      .from("subscriptions")
+      .select("monthly_quota, auto_renew")
+      .eq("student_id", studentId)
+      .maybeSingle();
+    if (sub2 && sub2.auto_renew === false) {
+      const used = await getStudentUsedThisMonth(studentId);
+      if (Number(sub2.monthly_quota) - used <= 0) {
+        await admin
+          .from("profiles")
+          .update({ is_active: false })
+          .eq("id", studentId);
+      }
+    }
+  }
+
   revalidatePath(`/oturum/${sessionId}`);
   revalidatePath(`/kisi/${studentId}`);
   revalidatePath("/kurum");
   revalidatePath("/sube");
 }
+

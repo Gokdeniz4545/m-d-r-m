@@ -20,6 +20,7 @@ import { TeacherCompensationForm } from "@/components/teacher-compensation-form"
 import { Section } from "@/components/collapsible-section";
 import { PersonContactForm } from "@/components/person-contact-form";
 import { ChangeTeacherForm } from "@/components/change-teacher-form";
+import { AutoRenewToggle, RenewButton } from "@/components/renewal-controls";
 
 export default async function KisiProfil({
   params,
@@ -222,6 +223,7 @@ export default async function KisiProfil({
     opening_balance: number;
     makeup_credits: number;
     billing_period: string | null;
+    auto_renew: boolean | null;
   } | null = null;
   let payments: {
     id: string;
@@ -244,7 +246,7 @@ export default async function KisiProfil({
     const [subRes, payRes, adjRes, used, lg] = await Promise.all([
       supabase
         .from("subscriptions")
-        .select("monthly_fee, monthly_quota, total_months, start_date, opening_used, opening_balance, makeup_credits, billing_period")
+        .select("monthly_fee, monthly_quota, total_months, start_date, opening_used, opening_balance, makeup_credits, billing_period, auto_renew")
         .eq("student_id", id)
         .maybeSingle(),
       supabase
@@ -731,6 +733,26 @@ export default async function KisiProfil({
           {ledger ? (
             <Section title="Bakiyeyi güncelle">
               <BalanceForm studentId={person.id} currentBalance={ledger.balance} />
+            </Section>
+          ) : null}
+
+          {canManage ? (
+            <Section title="Otomatik yenileme" defaultOpen>
+              <div className="flex flex-col gap-3">
+                <AutoRenewToggle
+                  studentId={person.id}
+                  on={sub?.auto_renew ?? true}
+                />
+                <p className="text-xs text-muted">
+                  Kapalıyken ders hakkı bittiğinde öğrenci otomatik pasife düşer.
+                </p>
+                {!person.is_active ? (
+                  <div className="border-t border-border pt-3">
+                    <p className="mb-2 text-sm text-muted">Öğrenci pasif.</p>
+                    <RenewButton studentId={person.id} />
+                  </div>
+                ) : null}
+              </div>
             </Section>
           ) : null}
 

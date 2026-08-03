@@ -4,7 +4,7 @@ import { PanelShell } from "@/components/panel-shell";
 import { getOutstanding, formatTRY } from "@/lib/billing";
 
 export default async function TahsilatPage() {
-  const profile = await requireRole(["org_admin", "branch_admin"]);
+  const profile = await requireRole(["org_admin"]);
   const { rows, total } = await getOutstanding();
 
   return (

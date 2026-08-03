@@ -8,7 +8,7 @@ import { EXPENSE_CATEGORY_LABEL, type ExpenseRow } from "@/lib/expenses";
 import { formatTRY } from "@/lib/billing";
 
 export default async function GiderlerPage() {
-  const profile = await requireRole(["org_admin", "branch_admin"]);
+  const profile = await requireRole(["org_admin"]);
   const supabase = await createClient();
 
   const { data: expenseData } = await supabase

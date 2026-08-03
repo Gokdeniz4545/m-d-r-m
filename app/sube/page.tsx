@@ -4,12 +4,15 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { ActionCard } from "@/components/dashboard/action-card";
 import { getBranchStats, getMyAdminBranchIds } from "@/lib/dashboard-data";
 import { getMakeupPool } from "@/lib/makeup";
+import { getExpiringStudents } from "@/lib/renewal";
+import { ExpiringCard } from "@/components/expiring-card";
 
 export default async function SubeHome() {
   const profile = await requireRole(["branch_admin"]);
   const branchIds = await getMyAdminBranchIds(profile.id);
   const stats = await getBranchStats(branchIds);
   const makeupPool = await getMakeupPool();
+  const expiring = await getExpiringStudents(branchIds);
 
   return (
     <PanelShell title="Şube Paneli" profile={profile}>
@@ -42,6 +45,10 @@ export default async function SubeHome() {
           }
           href="/telafi"
         />
+      </div>
+
+      <div className="mt-6">
+        <ExpiringCard rows={expiring} />
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
