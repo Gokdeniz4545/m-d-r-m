@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
 import { WEEKDAYS } from "@/lib/roles";
 import { DayGrid } from "@/components/calendar/day-grid";
+import { SchoolDayGrid } from "@/components/calendar/school-day-grid";
 import { TeacherPicker } from "@/components/calendar/teacher-picker";
 
 const SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
@@ -103,7 +104,7 @@ export default async function TakvimPage({
 
   let sessQuery = supabase
     .from("sessions")
-    .select("id, student_id, teacher_id, date, start_time, end_time, is_makeup")
+    .select("id, slot_id, student_id, teacher_id, date, start_time, end_time, is_makeup")
     .gte("date", rangeStart)
     .lte("date", rangeEnd)
     .order("start_time");
@@ -150,12 +151,30 @@ export default async function TakvimPage({
     .filter((s) => s.date === ymd(gridDays[0]))
     .map((s) => ({
       id: s.id,
+      slot_id: s.slot_id,
       start_time: s.start_time,
       end_time: s.end_time,
       is_makeup: s.is_makeup,
       studentName: s.student_id ? (nameById.get(s.student_id) ?? "") : "",
     }));
   const daygridWeekday = ((gridDays[0].getDay() + 6) % 7) + 1;
+
+  // Öğretmen takvimi günlük — özel etkinlikler
+  let daygridEvents: {
+    id: string;
+    start_time: string;
+    end_time: string;
+    description: string | null;
+  }[] = [];
+  if (showGrid) {
+    const { data: evs } = await supabase
+      .from("calendar_events")
+      .select("id, start_time, end_time, description")
+      .eq("teacher_id", teacherId)
+      .eq("date", ymd(gridDays[0]))
+      .order("start_time");
+    daygridEvents = evs ?? [];
+  }
   const makeupStudentId =
     showGrid && sp.mk && daygridStudents.some((s) => s.id === sp.mk)
       ? sp.mk
@@ -163,6 +182,42 @@ export default async function TakvimPage({
   const makeupStudentName = makeupStudentId
     ? (daygridStudents.find((s) => s.id === makeupStudentId)?.name ?? null)
     : null;
+
+  // Okul günlük — öğretmen başına sütun (öğretmen seçili değilse)
+  const showSchoolGrid = teacherId === "" && view === "gun";
+  const schoolColumns: {
+    teacherId: string;
+    teacherName: string;
+    sessions: {
+      id: string;
+      start: string;
+      end: string;
+      is_makeup: boolean;
+      studentName: string;
+    }[];
+  }[] = [];
+  if (showSchoolGrid) {
+    const byTeacher = new Map<string, (typeof schoolColumns)[number]["sessions"]>();
+    for (const s of sessions ?? []) {
+      if (s.date !== ymd(gridDays[0]) || !s.teacher_id) continue;
+      if (!byTeacher.has(s.teacher_id)) byTeacher.set(s.teacher_id, []);
+      byTeacher.get(s.teacher_id)!.push({
+        id: s.id,
+        start: s.start_time,
+        end: s.end_time,
+        is_makeup: s.is_makeup,
+        studentName: s.student_id ? (nameById.get(s.student_id) ?? "") : "",
+      });
+    }
+    for (const [tid, sess] of byTeacher) {
+      schoolColumns.push({
+        teacherId: tid,
+        teacherName: nameById.get(tid) ?? "?",
+        sessions: sess,
+      });
+    }
+    schoolColumns.sort((a, b) => a.teacherName.localeCompare(b.teacherName, "tr"));
+  }
 
   const byDay = new Map<string, typeof sessions>();
   (sessions ?? []).forEach((s) => {
@@ -284,54 +339,14 @@ export default async function TakvimPage({
               teacherId={teacherId}
               students={daygridStudents}
               sessions={daygridSessions}
+              events={daygridEvents}
               canMark={canMark}
               makeupStudentId={makeupStudentId}
               makeupStudentName={makeupStudentName}
             />
           </>
         ) : (
-        <div className="card p-4">
-          {(byDay.get(ymd(gridDays[0])) ?? []).length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {(byDay.get(ymd(gridDays[0])) ?? []).map((s) => {
-                const info = infoOf(s);
-                const content = (
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="tabular font-medium">
-                        {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-sm text-muted">
-                        {dots(s.id)}
-                        <span>
-                          {info?.name ?? "Ders"}
-                          {info?.teacher ? ` · ${info.teacher}` : ""}
-                          {s.is_makeup ? " · Telafi" : ""}
-                        </span>
-                      </div>
-                    </div>
-                    {canMark ? <span className="chip">Yoklama →</span> : null}
-                  </div>
-                );
-                return canMark ? (
-                  <Link
-                    key={s.id}
-                    href={`/oturum/${s.id}`}
-                    className="block rounded-lg bg-accent px-3 py-2.5 transition hover:bg-primary/15"
-                  >
-                    {content}
-                  </Link>
-                ) : (
-                  <div key={s.id} className="rounded-lg bg-accent px-3 py-2.5">
-                    {content}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-sm text-muted">Bu gün ders yok.</p>
-          )}
-        </div>
+        <SchoolDayGrid columns={schoolColumns} canMark={canMark} />
         )
       ) : view === "hafta" ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
