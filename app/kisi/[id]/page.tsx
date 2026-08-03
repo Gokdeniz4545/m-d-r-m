@@ -19,6 +19,7 @@ import { getTeacherEarningThisMonth, COMP_TYPE_LABEL } from "@/lib/compensation"
 import { TeacherCompensationForm } from "@/components/teacher-compensation-form";
 import { Section } from "@/components/collapsible-section";
 import { PersonContactForm } from "@/components/person-contact-form";
+import { ChangeTeacherForm } from "@/components/change-teacher-form";
 
 export default async function KisiProfil({
   params,
@@ -164,6 +165,20 @@ export default async function KisiProfil({
   }
 
   const canManage = viewer.role === "org_admin" || viewer.role === "branch_admin";
+
+  // Öğretmen değiştir/ata için öğretmen listesi (yalnız öğrenci + yönetici)
+  let teacherOptions: { id: string; name: string }[] = [];
+  if (canManage && person.role === "student") {
+    const { data: ts } = await supabase
+      .from("profiles")
+      .select("id, full_name, username")
+      .eq("role", "teacher")
+      .order("full_name");
+    teacherOptions = (ts ?? []).map((t) => ({
+      id: t.id,
+      name: t.full_name ?? t.username,
+    }));
+  }
 
   // Öğretmen hakedişi (yönetici görünümünde)
   const showComp = canManage && person.role === "teacher";
@@ -407,6 +422,21 @@ export default async function KisiProfil({
                 : ""}
             </div>
           </div>
+          {canManage ? (
+            <div className="mt-3 border-t border-border pt-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                Öğretmen ata / değiştir
+              </div>
+              <ChangeTeacherForm
+                studentId={person.id}
+                currentTeacherId={person.teacher_id}
+                teachers={teacherOptions}
+              />
+              <p className="mt-1 text-xs text-muted">
+                Kalıcı değişiklik: yaklaşan dersler yeni öğretmenin takvimine taşınır.
+              </p>
+            </div>
+          ) : null}
         </Section>
       ) : (
         <Section title="Öğrencileri" count={teacherStudents.length} defaultOpen>

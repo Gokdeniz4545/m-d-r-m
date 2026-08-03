@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
 import { AttendanceButtons } from "@/components/attendance-buttons";
+import { SubstituteTeacherForm } from "@/components/substitute-teacher-form";
 
 export default async function OturumPage({
   params,
@@ -58,6 +59,21 @@ export default async function OturumPage({
     );
   }
 
+  // Vekil öğretmen için liste (yalnız yönetici)
+  const isAdmin = ["org_admin", "branch_admin"].includes(profile.role);
+  let teacherOptions: { id: string; name: string }[] = [];
+  if (isAdmin) {
+    const { data: ts } = await supabase
+      .from("profiles")
+      .select("id, full_name, username")
+      .eq("role", "teacher")
+      .order("full_name");
+    teacherOptions = (ts ?? []).map((t) => ({
+      id: t.id,
+      name: t.full_name ?? t.username,
+    }));
+  }
+
   const dateLabel = new Date(session.date).toLocaleDateString("tr-TR", {
     weekday: "long",
     day: "2-digit",
@@ -84,6 +100,20 @@ export default async function OturumPage({
           {session.is_makeup ? " · Telafi" : ""}
         </div>
       </div>
+
+      {isAdmin ? (
+        <div className="card mb-6 p-4">
+          <SubstituteTeacherForm
+            sessionId={id}
+            currentTeacherId={session.teacher_id}
+            teachers={teacherOptions}
+          />
+          <p className="mt-1 text-xs text-muted">
+            Sadece bu ders için öğretmeni değiştirir; öğrencinin asıl öğretmeni
+            değişmez.
+          </p>
+        </div>
+      ) : null}
 
       {studentIds.length > 0 ? (
         <div className="flex flex-col gap-2">
