@@ -30,11 +30,7 @@ export default async function TelafiPage({
 
   return (
     <PanelShell
-      title={
-        branchName
-          ? `Aboneliği bitmek üzere olanlar · ${branchName}`
-          : "Aboneliği bitmek üzere olanlar"
-      }
+      title={branchName ? `Telafi Havuzu · ${branchName}` : "Telafi Havuzu"}
       profile={profile}
     >
       <Link

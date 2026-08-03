@@ -6,7 +6,9 @@ import { PanelShell } from "@/components/panel-shell";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ActionCard } from "@/components/dashboard/action-card";
 import { getBranchStats } from "@/lib/dashboard-data";
-import { getMakeupPool } from "@/lib/makeup";
+import { getMakeupPool, getRenewedStudents } from "@/lib/makeup";
+import { MakeupPoolCard } from "@/components/makeup-pool-card";
+import { RenewedCard } from "@/components/renewed-card";
 
 export default async function KurumSubeDetay({
   params,
@@ -26,6 +28,7 @@ export default async function KurumSubeDetay({
 
   const stats = await getBranchStats([id]);
   const makeupPool = await getMakeupPool(id);
+  const renewed = await getRenewedStudents(id);
 
   return (
     <PanelShell title={branch.name} profile={profile}>
@@ -58,17 +61,9 @@ export default async function KurumSubeDetay({
         />
       </div>
 
-      <div className="mt-4">
-        <StatCard
-          label="Aboneliği bitmek üzere"
-          value={makeupPool.length}
-          sublabel={
-            makeupPool.length > 0
-              ? "ders hakkı bitmek üzere · aç"
-              : "Bekleyen yok"
-          }
-          href={`/telafi?sube=${id}`}
-        />
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <RenewedCard rows={renewed} />
+        <MakeupPoolCard pool={makeupPool} />
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

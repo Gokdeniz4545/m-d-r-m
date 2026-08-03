@@ -126,11 +126,14 @@ export async function registerStudent(
   const admin = createAdminClient();
 
   // 2) Abonelik (ders hakkı / telafi / borç)
+  const fee = monthlyFee >= 0 ? monthlyFee : 0;
+  const quota = monthlyQuota >= 0 ? monthlyQuota : 0;
   await admin.from("subscriptions").upsert(
     {
       student_id: studentId,
-      monthly_fee: monthlyFee >= 0 ? monthlyFee : 0,
-      monthly_quota: monthlyQuota >= 0 ? monthlyQuota : 0,
+      monthly_fee: fee,
+      monthly_quota: quota,
+      package_quota: quota, // yenileme başına verilecek paket = ilk ders hakkı
       total_months: totalMonths,
       start_date: startDate,
       status: "active",
@@ -141,6 +144,16 @@ export async function registerStudent(
     },
     { onConflict: "student_id" },
   );
+
+  // 2a) Kayıt anında borç: paket ücreti kadar (+). Alınan ödeme aşağıda ayrıca düşülür.
+  if (fee > 0) {
+    await admin.from("adjustments").insert({
+      student_id: studentId,
+      amount: fee,
+      note: "Abonelik kaydı",
+      created_by: actor.id,
+    });
+  }
 
   // 2b) Kayıtta ödeme alındıysa kaydet
   if (initialPayment > 0) {

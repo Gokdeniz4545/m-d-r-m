@@ -4,162 +4,169 @@ export type MakeupMiss = { date: string; start: string; end: string };
 export type MakeupPoolRow = {
   id: string;
   name: string;
-  teacherId: string | null;
   teacherName: string | null;
-  autoRenew: boolean;
-  lowQuota: boolean; // kalan ders hakkı == 1
-  missed: MakeupMiss[]; // izinli (giremediği) dersler — telafi bekliyor
+  missed: MakeupMiss[];
+};
+export type RenewedRow = {
+  id: string;
+  name: string;
+  teacherName: string | null;
+  renewedAt: string;
 };
 
-// "Aboneliği bitmek üzere olanlar" havuzu. İki grubun birleşimi:
-//  (1) İzinli olup telafi bekleyen öğrenciler (makeup_credits > 0) — giremediği
-//      ders gün/saatleriyle.
-//  (2) Kalan ders hakkı tam 1 olan (aboneliği bitmek üzere) öğrenciler.
-// used = İŞLENEN devir (geçiş ayında) + izinli hariç yoklamalar (paket kümülatif).
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
+
+// İçinde bulunulan haftanın (Pazartesi–Pazar) sınırları.
+function weekBounds(now: Date) {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  const dow = (d.getDay() + 6) % 7; // Pazartesi = 0
+  const mon = new Date(d);
+  mon.setDate(d.getDate() - dow);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  return { monISO: mon.toISOString(), monYmd: ymd(mon), sunYmd: ymd(sun) };
+}
+
+async function branchStudentIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  branchId?: string,
+): Promise<Set<string> | null> {
+  if (!branchId) return null;
+  const { data: mems } = await supabase
+    .from("branch_memberships")
+    .select("user_id")
+    .eq("branch_id", branchId)
+    .eq("role", "student");
+  return new Set((mems ?? []).map((m) => m.user_id));
+}
+
+async function teacherNames(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  teacherIds: (string | null)[],
+): Promise<Map<string, string>> {
+  const tids = [...new Set(teacherIds.filter(Boolean) as string[])];
+  const map = new Map<string, string>();
+  if (tids.length === 0) return map;
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, full_name, username")
+    .in("id", tids);
+  (data ?? []).forEach((t) => map.set(t.id, t.full_name ?? t.username));
+  return map;
+}
+
+// Telafi Havuzu: bu hafta "izinli" olarak işaretlenen öğrenciler + giremedikleri
+// ders gün/saatleri.
 export async function getMakeupPool(branchId?: string): Promise<MakeupPoolRow[]> {
   const supabase = await createClient();
-  const { data: profs } = await supabase
-    .from("profiles")
-    .select("id, full_name, username, teacher_id")
-    .eq("role", "student")
-    .eq("is_active", true);
-  let students = profs ?? [];
+  const { monYmd, sunYmd } = weekBounds(new Date());
 
-  if (branchId) {
-    const { data: mems } = await supabase
-      .from("branch_memberships")
-      .select("user_id")
-      .eq("branch_id", branchId)
-      .eq("role", "student");
-    const set = new Set((mems ?? []).map((m) => m.user_id));
-    students = students.filter((s) => set.has(s.id));
-  }
-  if (students.length === 0) return [];
+  // Bu haftaki oturumlar
+  const { data: sess } = await supabase
+    .from("sessions")
+    .select("id, date, start_time, end_time, student_id")
+    .gte("date", monYmd)
+    .lte("date", sunYmd);
+  const sessions = sess ?? [];
+  if (sessions.length === 0) return [];
+  const sessById = new Map(sessions.map((s) => [s.id, s]));
+  const sessIds = sessions.map((s) => s.id);
 
-  const ids = students.map((s) => s.id);
-  const now = new Date();
-  const curPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-
-  const subByStudent = new Map<
-    string,
-    {
-      monthly_quota: number;
-      opening_used: number;
-      opening_period: string | null;
-      auto_renew: boolean;
-      makeup_credits: number;
-    }
-  >();
-  for (let i = 0; i < ids.length; i += 100) {
-    const { data } = await supabase
-      .from("subscriptions")
-      .select(
-        "student_id, monthly_quota, opening_used, opening_period, auto_renew, makeup_credits",
-      )
-      .in("student_id", ids.slice(i, i + 100));
-    (data ?? []).forEach((s) =>
-      subByStudent.set(s.student_id, {
-        monthly_quota: Number(s.monthly_quota ?? 0),
-        opening_used: Number(s.opening_used ?? 0),
-        opening_period: s.opening_period,
-        auto_renew: s.auto_renew ?? true,
-        makeup_credits: Number(s.makeup_credits ?? 0),
-      }),
-    );
-  }
-
-  const attCount = new Map<string, number>();
-  for (let i = 0; i < ids.length; i += 100) {
-    const { data } = await supabase
-      .from("attendance")
-      .select("student_id, status")
-      .in("student_id", ids.slice(i, i + 100))
-      .neq("status", "excused");
-    (data ?? []).forEach((a) =>
-      attCount.set(a.student_id, (attCount.get(a.student_id) ?? 0) + 1),
-    );
-  }
-
-  // İzinli (excused) oturumlar → giremediği dersler (telafi bekleyenler için)
-  const missedByStudent = new Map<string, MakeupMiss[]>();
+  // Bu haftaki izinli yoklamalar
   const { data: atts } = await supabase
     .from("attendance")
     .select("student_id, session_id, status")
-    .in("student_id", ids)
+    .in("session_id", sessIds)
     .eq("status", "excused");
-  const attList = atts ?? [];
-  if (attList.length > 0) {
-    const sessIds = [...new Set(attList.map((a) => a.session_id))];
-    const sessById = new Map<
-      string,
-      { date: string; start_time: string; end_time: string }
-    >();
-    for (let i = 0; i < sessIds.length; i += 100) {
-      const { data: sess } = await supabase
-        .from("sessions")
-        .select("id, date, start_time, end_time")
-        .in("id", sessIds.slice(i, i + 100));
-      (sess ?? []).forEach((s) =>
-        sessById.set(s.id, {
-          date: s.date,
-          start_time: s.start_time,
-          end_time: s.end_time,
-        }),
-      );
-    }
-    for (const a of attList) {
-      const s = sessById.get(a.session_id);
-      if (!s) continue;
-      const arr = missedByStudent.get(a.student_id) ?? [];
-      arr.push({ date: s.date, start: s.start_time, end: s.end_time });
-      missedByStudent.set(a.student_id, arr);
-    }
-  }
+  const excused = atts ?? [];
+  if (excused.length === 0) return [];
 
-  // Öğretmen adları
-  const tids = [
-    ...new Set(students.map((s) => s.teacher_id).filter(Boolean) as string[]),
-  ];
-  const tname = new Map<string, string>();
-  if (tids.length > 0) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name, username")
-      .in("id", tids);
-    (data ?? []).forEach((t) => tname.set(t.id, t.full_name ?? t.username));
+  const branchSet = await branchStudentIds(supabase, branchId);
+  const missedByStudent = new Map<string, MakeupMiss[]>();
+  for (const a of excused) {
+    if (branchSet && !branchSet.has(a.student_id)) continue;
+    const s = sessById.get(a.session_id);
+    if (!s) continue;
+    const arr = missedByStudent.get(a.student_id) ?? [];
+    arr.push({ date: s.date, start: s.start_time, end: s.end_time });
+    missedByStudent.set(a.student_id, arr);
   }
+  const ids = [...missedByStudent.keys()];
+  if (ids.length === 0) return [];
+
+  const { data: profs } = await supabase
+    .from("profiles")
+    .select("id, full_name, username, teacher_id, role")
+    .in("id", ids);
+  const tname = await teacherNames(
+    supabase,
+    (profs ?? []).map((p) => p.teacher_id),
+  );
 
   const rows: MakeupPoolRow[] = [];
-  for (const st of students) {
-    const sub = subByStudent.get(st.id);
-    if (!sub) continue;
-    const seed = sub.opening_period === curPeriod ? sub.opening_used : 0;
-    const used = seed + (attCount.get(st.id) ?? 0);
-    const remaining = sub.monthly_quota - used;
-    const lowQuota = sub.monthly_quota > 0 && remaining === 1;
-    const missed =
-      sub.makeup_credits > 0
-        ? (missedByStudent.get(st.id) ?? []).sort((a, b) =>
-            a.date < b.date ? 1 : a.date > b.date ? -1 : a.start.localeCompare(b.start),
-          )
-        : [];
-    // Havuza yalnızca ilgili öğrenciler girer.
-    if (!lowQuota && missed.length === 0) continue;
+  for (const p of profs ?? []) {
+    if (p.role !== "student") continue;
+    const missed = (missedByStudent.get(p.id) ?? []).sort((a, b) =>
+      a.date < b.date ? -1 : a.date > b.date ? 1 : a.start.localeCompare(b.start),
+    );
     rows.push({
-      id: st.id,
-      name: st.full_name ?? st.username,
-      teacherId: st.teacher_id,
-      teacherName: st.teacher_id ? (tname.get(st.teacher_id) ?? null) : null,
-      autoRenew: sub.auto_renew,
-      lowQuota,
+      id: p.id,
+      name: p.full_name ?? p.username,
+      teacherName: p.teacher_id ? (tname.get(p.teacher_id) ?? null) : null,
       missed,
     });
   }
-  // Önce ders hakkı bitenler, sonra isim
-  rows.sort(
-    (a, b) =>
-      Number(b.lowQuota) - Number(a.lowQuota) ||
-      a.name.localeCompare(b.name, "tr"),
+  rows.sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  return rows;
+}
+
+// Aboneliği bu hafta yenilenen öğrenciler (renewed_at bu hafta içinde).
+export async function getRenewedStudents(
+  branchId?: string,
+): Promise<RenewedRow[]> {
+  const supabase = await createClient();
+  const { monISO } = weekBounds(new Date());
+
+  const { data: subs } = await supabase
+    .from("subscriptions")
+    .select("student_id, renewed_at")
+    .gte("renewed_at", monISO);
+  const list = subs ?? [];
+  if (list.length === 0) return [];
+
+  const branchSet = await branchStudentIds(supabase, branchId);
+  const filtered = branchSet
+    ? list.filter((s) => branchSet.has(s.student_id))
+    : list;
+  if (filtered.length === 0) return [];
+
+  const ids = filtered.map((s) => s.student_id);
+  const { data: profs } = await supabase
+    .from("profiles")
+    .select("id, full_name, username, teacher_id, role")
+    .in("id", ids);
+  const byId = new Map((profs ?? []).map((p) => [p.id, p]));
+  const tname = await teacherNames(
+    supabase,
+    (profs ?? []).map((p) => p.teacher_id),
   );
+
+  const rows: RenewedRow[] = [];
+  for (const s of filtered) {
+    const p = byId.get(s.student_id);
+    if (!p || p.role !== "student") continue;
+    rows.push({
+      id: p.id,
+      name: p.full_name ?? p.username,
+      teacherName: p.teacher_id ? (tname.get(p.teacher_id) ?? null) : null,
+      renewedAt: s.renewed_at as string,
+    });
+  }
+  rows.sort((a, b) => (a.renewedAt < b.renewedAt ? 1 : -1));
   return rows;
 }

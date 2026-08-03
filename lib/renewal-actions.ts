@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { renewSubscription } from "@/lib/renewal-core";
 
 async function requireAdmin() {
   const p = await getSessionProfile();
@@ -26,18 +28,20 @@ export async function setAutoRenew(formData: FormData): Promise<void> {
   revalidatePath("/kurum");
 }
 
-// Yenile: pasif öğrenciyi aktif yap + oto-yenilemeyi aç.
-// (Yeni paket ders hakkı/ücreti ve program, öğretmen randevu sihirbazından ayarlanır.)
+// Yenile: pasif öğrenciyi aktif yap + oto-yenilemeyi aç + aboneliği yenile
+// (ders hakkını paket kadar uzat + borç oluştur + renewed_at damgala).
 export async function renewStudent(formData: FormData): Promise<void> {
-  if (!(await requireAdmin())) return;
+  const actor = await requireAdmin();
+  if (!actor) return;
   const studentId = String(formData.get("studentId") ?? "");
   if (!studentId) return;
-  const supabase = await createClient();
-  await supabase.from("profiles").update({ is_active: true }).eq("id", studentId);
-  await supabase
+  const admin = createAdminClient();
+  await admin.from("profiles").update({ is_active: true }).eq("id", studentId);
+  await admin
     .from("subscriptions")
     .update({ auto_renew: true })
     .eq("student_id", studentId);
+  await renewSubscription(admin, studentId, actor.id);
   revalidatePath(`/kisi/${studentId}`);
   revalidatePath("/sube");
   revalidatePath("/kurum");

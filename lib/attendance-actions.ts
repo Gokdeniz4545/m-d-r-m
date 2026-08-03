@@ -5,6 +5,7 @@ import { getSessionProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudentUsedThisMonth } from "@/lib/billing";
+import { renewSubscription } from "@/lib/renewal-core";
 
 export async function markAttendance(formData: FormData): Promise<void> {
   const p = await getSessionProfile();
@@ -75,7 +76,9 @@ export async function markAttendance(formData: FormData): Promise<void> {
     }
   }
 
-  // Ders hakkı bitti mi? auto_renew KAPALIYSA öğrenci pasife düşer (son "Geldi/Gelmedi").
+  // Ders hakkı bitti mi? (izinli hariç son yoklama ile kalan 0'a inince)
+  //  - auto_renew AÇIK → abonelik otomatik yenilenir (paket uzar + borç + damga).
+  //  - auto_renew KAPALI → öğrenci pasife düşer.
   if (status !== "excused") {
     const admin = createAdminClient();
     const { data: sub2 } = await admin
@@ -83,13 +86,17 @@ export async function markAttendance(formData: FormData): Promise<void> {
       .select("monthly_quota, auto_renew")
       .eq("student_id", studentId)
       .maybeSingle();
-    if (sub2 && sub2.auto_renew === false) {
+    if (sub2 && Number(sub2.monthly_quota) > 0) {
       const used = await getStudentUsedThisMonth(studentId);
       if (Number(sub2.monthly_quota) - used <= 0) {
-        await admin
-          .from("profiles")
-          .update({ is_active: false })
-          .eq("id", studentId);
+        if (sub2.auto_renew === false) {
+          await admin
+            .from("profiles")
+            .update({ is_active: false })
+            .eq("id", studentId);
+        } else {
+          await renewSubscription(admin, studentId, null);
+        }
       }
     }
   }
