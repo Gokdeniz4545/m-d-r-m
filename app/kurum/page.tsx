@@ -5,7 +5,6 @@ import { ActionCard } from "@/components/dashboard/action-card";
 import { getOrgStats } from "@/lib/dashboard-data";
 import { getOutstanding, formatTRY } from "@/lib/billing";
 import { getMakeupPool } from "@/lib/makeup";
-import { MakeupPoolCard } from "@/components/makeup-pool-card";
 
 export default async function KurumHome() {
   const profile = await requireRole(["org_admin"]);
@@ -51,8 +50,18 @@ export default async function KurumHome() {
         />
       </div>
 
-      <div className="mt-6">
-        <MakeupPoolCard pool={makeupPool} />
+      <div className="mt-4">
+        <StatCard
+          label="Telafi Havuzu"
+          value={makeupPool.length}
+          sublabel={
+            makeupPool.length > 0
+              ? "telafi bekleyen öğrenci · aç"
+              : "Telafi bekleyen yok"
+          }
+          href="/telafi"
+          icon="takvim"
+        />
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">

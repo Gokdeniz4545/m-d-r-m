@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
 import { WEEKDAYS } from "@/lib/roles";
 import { DayGrid } from "@/components/calendar/day-grid";
-import { SchoolDayGrid } from "@/components/calendar/school-day-grid";
 import { TeacherPicker } from "@/components/calendar/teacher-picker";
 
 const SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
@@ -111,12 +110,23 @@ export default async function TakvimPage({
   if (teacherId) sessQuery = sessQuery.eq("teacher_id", teacherId);
   const { data: sessions } = await sessQuery;
 
-  // Oturum → öğrenci adı (+ öğretmen adı). class yerine öğrenci/öğretmen.
+  // Özel etkinlikler (aralık): okul takviminde tümü, öğretmen seçiliyse o öğretmenin
+  let evQuery = supabase
+    .from("calendar_events")
+    .select("id, teacher_id, date, start_time, end_time, description")
+    .gte("date", rangeStart)
+    .lte("date", rangeEnd)
+    .order("start_time");
+  if (teacherId) evQuery = evQuery.eq("teacher_id", teacherId);
+  const { data: rangeEvents } = await evQuery;
+
+  // Oturum + etkinlik → isim eşlemesi
   const personIds = [
     ...new Set(
-      (sessions ?? [])
-        .flatMap((s) => [s.student_id, s.teacher_id])
-        .filter(Boolean) as string[],
+      [
+        ...(sessions ?? []).flatMap((s) => [s.student_id, s.teacher_id]),
+        ...(rangeEvents ?? []).map((e) => e.teacher_id),
+      ].filter(Boolean) as string[],
     ),
   ];
   const nameById = new Map<string, string>();
@@ -130,6 +140,23 @@ export default async function TakvimPage({
   const infoOf = (s: { student_id: string | null; teacher_id: string | null }) => ({
     name: s.student_id ? (nameById.get(s.student_id) ?? null) : null,
     teacher: s.teacher_id ? (nameById.get(s.teacher_id) ?? null) : null,
+  });
+
+  // Etkinlikleri güne göre grupla (okul + öğretmen görünümlerinde göster)
+  const byDayEvents = new Map<
+    string,
+    { id: string; teacherName: string; start: string; end: string; description: string | null }[]
+  >();
+  (rangeEvents ?? []).forEach((e) => {
+    const arr = byDayEvents.get(e.date) ?? [];
+    arr.push({
+      id: e.id,
+      teacherName: e.teacher_id ? (nameById.get(e.teacher_id) ?? "?") : "?",
+      start: e.start_time,
+      end: e.end_time,
+      description: e.description,
+    });
+    byDayEvents.set(e.date, arr);
   });
 
   // Öğretmen takvimi — günlük 15 dk ızgara verisi
@@ -160,21 +187,14 @@ export default async function TakvimPage({
   const daygridWeekday = ((gridDays[0].getDay() + 6) % 7) + 1;
 
   // Öğretmen takvimi günlük — özel etkinlikler
-  let daygridEvents: {
-    id: string;
-    start_time: string;
-    end_time: string;
-    description: string | null;
-  }[] = [];
-  if (showGrid) {
-    const { data: evs } = await supabase
-      .from("calendar_events")
-      .select("id, start_time, end_time, description")
-      .eq("teacher_id", teacherId)
-      .eq("date", ymd(gridDays[0]))
-      .order("start_time");
-    daygridEvents = evs ?? [];
-  }
+  const daygridEvents = (rangeEvents ?? [])
+    .filter((e) => e.date === ymd(gridDays[0]))
+    .map((e) => ({
+      id: e.id,
+      start_time: e.start_time,
+      end_time: e.end_time,
+      description: e.description,
+    }));
   const makeupStudentId =
     showGrid && sp.mk && daygridStudents.some((s) => s.id === sp.mk)
       ? sp.mk
@@ -183,41 +203,6 @@ export default async function TakvimPage({
     ? (daygridStudents.find((s) => s.id === makeupStudentId)?.name ?? null)
     : null;
 
-  // Okul günlük — öğretmen başına sütun (öğretmen seçili değilse)
-  const showSchoolGrid = teacherId === "" && view === "gun";
-  const schoolColumns: {
-    teacherId: string;
-    teacherName: string;
-    sessions: {
-      id: string;
-      start: string;
-      end: string;
-      is_makeup: boolean;
-      studentName: string;
-    }[];
-  }[] = [];
-  if (showSchoolGrid) {
-    const byTeacher = new Map<string, (typeof schoolColumns)[number]["sessions"]>();
-    for (const s of sessions ?? []) {
-      if (s.date !== ymd(gridDays[0]) || !s.teacher_id) continue;
-      if (!byTeacher.has(s.teacher_id)) byTeacher.set(s.teacher_id, []);
-      byTeacher.get(s.teacher_id)!.push({
-        id: s.id,
-        start: s.start_time,
-        end: s.end_time,
-        is_makeup: s.is_makeup,
-        studentName: s.student_id ? (nameById.get(s.student_id) ?? "") : "",
-      });
-    }
-    for (const [tid, sess] of byTeacher) {
-      schoolColumns.push({
-        teacherId: tid,
-        teacherName: nameById.get(tid) ?? "?",
-        sessions: sess,
-      });
-    }
-    schoolColumns.sort((a, b) => a.teacherName.localeCompare(b.teacherName, "tr"));
-  }
 
   const byDay = new Map<string, typeof sessions>();
   (sessions ?? []).forEach((s) => {
@@ -346,7 +331,63 @@ export default async function TakvimPage({
             />
           </>
         ) : (
-        <SchoolDayGrid columns={schoolColumns} canMark={canMark} />
+        <div className="card p-4">
+          {(byDay.get(ymd(gridDays[0])) ?? []).length > 0 ||
+          (byDayEvents.get(ymd(gridDays[0])) ?? []).length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {(byDayEvents.get(ymd(gridDays[0])) ?? []).map((e) => (
+                <div
+                  key={e.id}
+                  className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm"
+                >
+                  <span className="tabular font-medium">
+                    {e.start.slice(0, 5)}–{e.end.slice(0, 5)}
+                  </span>
+                  <span className="text-muted">
+                    {" · "}
+                    {e.teacherName} · Etkinlik: {e.description || "—"}
+                  </span>
+                </div>
+              ))}
+              {(byDay.get(ymd(gridDays[0])) ?? []).map((s) => {
+                const info = infoOf(s);
+                const content = (
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="tabular font-medium">
+                        {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-sm text-muted">
+                        {dots(s.id)}
+                        <span>
+                          {info?.name ?? "Ders"}
+                          {info?.teacher ? ` · ${info.teacher}` : ""}
+                          {s.is_makeup ? " · Telafi" : ""}
+                        </span>
+                      </div>
+                    </div>
+                    {canMark ? <span className="chip">Yoklama →</span> : null}
+                  </div>
+                );
+                return canMark ? (
+                  <Link
+                    key={s.id}
+                    href={`/oturum/${s.id}`}
+                    className="block rounded-lg bg-accent px-3 py-2.5 transition hover:bg-primary/15"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div key={s.id} className="rounded-lg bg-accent px-3 py-2.5">
+                    {content}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted">Bu gün ders/etkinlik yok.</p>
+          )}
+        </div>
         )
       ) : view === "hafta" ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -371,8 +412,21 @@ export default async function TakvimPage({
                     })}
                   </span>
                 </Link>
-                {list.length > 0 ? (
+                {list.length > 0 || (byDayEvents.get(key) ?? []).length > 0 ? (
                   <div className="flex flex-col gap-2">
+                    {(byDayEvents.get(key) ?? []).map((e) => (
+                      <div
+                        key={e.id}
+                        className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-sm"
+                      >
+                        <div className="font-medium">
+                          {e.start.slice(0, 5)}–{e.end.slice(0, 5)}
+                        </div>
+                        <div className="truncate text-muted">
+                          {e.teacherName} · {e.description || "Etkinlik"}
+                        </div>
+                      </div>
+                    ))}
                     {list.map((s) => {
                       const info = infoOf(s);
                       const content = (
