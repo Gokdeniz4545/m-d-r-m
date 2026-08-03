@@ -3,6 +3,8 @@ import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PanelShell } from "@/components/panel-shell";
 import { WEEKDAYS } from "@/lib/roles";
+import { DayGrid } from "@/components/calendar/day-grid";
+import { TeacherPicker } from "@/components/calendar/teacher-picker";
 
 const SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
@@ -15,7 +17,7 @@ function ymd(d: Date): string {
 export default async function TakvimPage({
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string; g?: string; d?: string }>;
+  searchParams: Promise<{ h?: string; g?: string; d?: string; t?: string }>;
 }) {
   const profile = await requireRole([
     "org_admin",
@@ -28,6 +30,20 @@ export default async function TakvimPage({
   const view = sp.g === "ay" ? "ay" : sp.g === "gun" ? "gun" : "hafta";
   const canMark = profile.role !== "student";
   const supabase = await createClient();
+
+  // Öğretmen seçici için öğretmen listesi; seçili öğretmen (öğretmen takvimi)
+  const { data: teacherList } = await supabase
+    .from("profiles")
+    .select("id, full_name, username")
+    .eq("role", "teacher")
+    .order("full_name");
+  const teachers = (teacherList ?? []).map((t) => ({
+    id: t.id,
+    name: t.full_name ?? t.username,
+  }));
+  const teacherId =
+    sp.t && teachers.some((t) => t.id === sp.t) ? sp.t : "";
+  const selectedTeacherName = teachers.find((t) => t.id === teacherId)?.name ?? null;
 
   const base = new Date();
   base.setHours(0, 0, 0, 0);
@@ -79,12 +95,14 @@ export default async function TakvimPage({
   const rangeStart = ymd(gridDays[0]);
   const rangeEnd = ymd(gridDays[gridDays.length - 1]);
 
-  const { data: sessions } = await supabase
+  let sessQuery = supabase
     .from("sessions")
     .select("id, student_id, teacher_id, date, start_time, end_time, is_makeup")
     .gte("date", rangeStart)
     .lte("date", rangeEnd)
     .order("start_time");
+  if (teacherId) sessQuery = sessQuery.eq("teacher_id", teacherId);
+  const { data: sessions } = await sessQuery;
 
   // Oturum → öğrenci adı (+ öğretmen adı). class yerine öğrenci/öğretmen.
   const personIds = [
@@ -106,6 +124,32 @@ export default async function TakvimPage({
     name: s.student_id ? (nameById.get(s.student_id) ?? null) : null,
     teacher: s.teacher_id ? (nameById.get(s.teacher_id) ?? null) : null,
   });
+
+  // Öğretmen takvimi — günlük 15 dk ızgara verisi
+  const showGrid = teacherId !== "" && view === "gun";
+  let daygridStudents: { id: string; name: string }[] = [];
+  if (showGrid) {
+    const { data: studs } = await supabase
+      .from("profiles")
+      .select("id, full_name, username")
+      .eq("teacher_id", teacherId)
+      .eq("role", "student")
+      .order("full_name");
+    daygridStudents = (studs ?? []).map((s) => ({
+      id: s.id,
+      name: s.full_name ?? s.username,
+    }));
+  }
+  const daygridSessions = (sessions ?? [])
+    .filter((s) => s.date === ymd(gridDays[0]))
+    .map((s) => ({
+      id: s.id,
+      start_time: s.start_time,
+      end_time: s.end_time,
+      is_makeup: s.is_makeup,
+      studentName: s.student_id ? (nameById.get(s.student_id) ?? "") : "",
+    }));
+  const daygridWeekday = ((gridDays[0].getDay() + 6) % 7) + 1;
 
   const byDay = new Map<string, typeof sessions>();
   (sessions ?? []).forEach((s) => {
@@ -195,7 +239,34 @@ export default async function TakvimPage({
         </div>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <TeacherPicker teachers={teachers} current={teacherId} />
+        <span className="text-sm text-muted">
+          {selectedTeacherName
+            ? `Öğretmen takvimi · ${selectedTeacherName}`
+            : "Okul takvimi"}
+        </span>
+        {teacherId && view !== "gun" ? (
+          <Link
+            href={`/takvim?g=gun&t=${teacherId}`}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            Günlük ızgaraya geç (planlama)
+          </Link>
+        ) : null}
+      </div>
+
       {view === "gun" ? (
+        showGrid ? (
+          <DayGrid
+            date={ymd(gridDays[0])}
+            weekday={daygridWeekday}
+            teacherId={teacherId}
+            students={daygridStudents}
+            sessions={daygridSessions}
+            canMark={canMark}
+          />
+        ) : (
         <div className="card p-4">
           {(byDay.get(ymd(gridDays[0])) ?? []).length > 0 ? (
             <div className="flex flex-col gap-2">
@@ -238,6 +309,7 @@ export default async function TakvimPage({
             <p className="text-sm text-muted">Bu gün ders yok.</p>
           )}
         </div>
+        )
       ) : view === "hafta" ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {gridDays.map((d, i) => {

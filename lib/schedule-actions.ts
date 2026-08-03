@@ -90,6 +90,17 @@ export async function addWeeklyLesson(
   return { error: null, ok: true };
 }
 
+// Tek formdan planlama: mode = "weekly" | "oneoff".
+export async function planLesson(
+  prev: State,
+  formData: FormData,
+): Promise<State> {
+  const mode = String(formData.get("mode") ?? "weekly");
+  return mode === "oneoff"
+    ? addOneoffSession(prev, formData)
+    : addWeeklyLesson(prev, formData);
+}
+
 // Tek seferlik ders/oturum (belirli tarih). Telafi de olabilir.
 export async function addOneoffSession(
   _prev: State,
