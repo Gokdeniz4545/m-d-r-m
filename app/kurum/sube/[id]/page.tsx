@@ -7,8 +7,6 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { ActionCard } from "@/components/dashboard/action-card";
 import { getBranchStats } from "@/lib/dashboard-data";
 import { getMakeupPool, getRenewedStudents } from "@/lib/makeup";
-import { MakeupPoolCard } from "@/components/makeup-pool-card";
-import { RenewedCard } from "@/components/renewed-card";
 
 export default async function KurumSubeDetay({
   params,
@@ -61,9 +59,19 @@ export default async function KurumSubeDetay({
         />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <RenewedCard rows={renewed} />
-        <MakeupPoolCard pool={makeupPool} />
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <StatCard
+          label="Aboneliği bu hafta yenilenen"
+          value={renewed.length}
+          sublabel={renewed.length > 0 ? "öğrenci · aç" : "Bu hafta yok"}
+          href={`/yenilenen?sube=${id}`}
+        />
+        <StatCard
+          label="Telafi Havuzu"
+          value={makeupPool.length}
+          sublabel={makeupPool.length > 0 ? "bu hafta izinli · aç" : "Bu hafta yok"}
+          href={`/telafi?sube=${id}`}
+        />
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

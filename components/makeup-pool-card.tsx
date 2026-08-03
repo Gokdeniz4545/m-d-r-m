@@ -26,12 +26,24 @@ export function MakeupPoolCard({ pool }: { pool: MakeupPoolRow[] }) {
           {pool.map((r) => (
             <div key={r.id} className="rounded-lg bg-accent px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Link href={`/kisi/${r.id}`} className="font-medium hover:underline">
-                  {r.name}
-                </Link>
-                {r.teacherName ? (
-                  <span className="text-xs text-muted">{r.teacherName}</span>
-                ) : null}
+                <div className="min-w-0">
+                  <Link href={`/kisi/${r.id}`} className="font-medium hover:underline">
+                    {r.name}
+                  </Link>
+                  {r.teacherName ? (
+                    <span className="ml-2 text-xs text-muted">{r.teacherName}</span>
+                  ) : null}
+                </div>
+                {r.teacherId ? (
+                  <Link
+                    href={`/takvim?g=gun&t=${r.teacherId}&mk=${r.id}`}
+                    className="btn-primary h-7 shrink-0 px-3 py-0 text-xs"
+                  >
+                    Planla →
+                  </Link>
+                ) : (
+                  <span className="shrink-0 text-xs text-danger">Öğretmen atanmalı</span>
+                )}
               </div>
               {r.missed.length > 0 ? (
                 <div className="mt-1.5 flex flex-wrap gap-1.5">

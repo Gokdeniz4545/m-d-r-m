@@ -4,6 +4,7 @@ export type MakeupMiss = { date: string; start: string; end: string };
 export type MakeupPoolRow = {
   id: string;
   name: string;
+  teacherId: string | null;
   teacherName: string | null;
   missed: MakeupMiss[];
 };
@@ -117,6 +118,7 @@ export async function getMakeupPool(branchId?: string): Promise<MakeupPoolRow[]>
     rows.push({
       id: p.id,
       name: p.full_name ?? p.username,
+      teacherId: p.teacher_id,
       teacherName: p.teacher_id ? (tname.get(p.teacher_id) ?? null) : null,
       missed,
     });
