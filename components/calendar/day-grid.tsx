@@ -89,7 +89,12 @@ export function DayGrid({
       <table className="w-full border-collapse">
         <tbody>
           {SLOTS.map((t) => {
-            if (covered.has(t)) {
+            const sc = sessStart.get(t);
+            const ec = evStart.get(t);
+            // Bu slot başka bir dersin/etkinliğin devamıyla kaplı ama tam bu
+            // saatte BAŞKA bir ders/etkinlik de başlıyorsa (çakışma/üst üste
+            // kayıt) — onu gizlemek yerine küçük bir "çakışma" kartı gösteririz.
+            if (covered.has(t) && !sc && !ec) {
               return (
                 <tr key={t}>
                   <td className="tabular w-14 py-0.5 pr-2 text-right align-top text-[11px] text-muted">
@@ -98,8 +103,41 @@ export function DayGrid({
                 </tr>
               );
             }
-            const sc = sessStart.get(t);
-            const ec = evStart.get(t);
+            if (covered.has(t) && (sc || ec)) {
+              return (
+                <tr key={t}>
+                  <td className="tabular w-14 py-0.5 pr-2 text-right align-top text-[11px] text-muted">
+                    {t}
+                  </td>
+                  <td className="p-0.5">
+                    <div className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-1.5">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-danger">
+                        <span>⚠ Çakışma:</span>
+                        <span className="truncate">
+                          {sc ? sc.s.studentName || "Öğrenci" : ec?.e.description || "Etkinlik"}
+                        </span>
+                      </div>
+                      {canMark && sc ? (
+                        <Link
+                          href={`/oturum/${sc.s.id}`}
+                          className="text-xs font-medium text-primary hover:underline"
+                        >
+                          Yoklama / düzenle →
+                        </Link>
+                      ) : null}
+                      {canMark && ec ? (
+                        <form action={deleteCalendarEvent}>
+                          <input type="hidden" name="id" value={ec.e.id} />
+                          <button className="text-xs font-medium text-danger hover:underline">
+                            sil
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              );
+            }
             return (
               <tr key={t}>
                 <td className="tabular w-14 py-0.5 pr-2 text-right align-top text-[11px] text-muted">

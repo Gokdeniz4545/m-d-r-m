@@ -18,9 +18,11 @@ type Teacher = {
   branchIds: string[];
 };
 
-function addHour(h: string): string {
+// Tüm dersler 45 dk.
+function addLessonLength(h: string): string {
   const [hh, mm] = h.split(":").map(Number);
-  return `${String((hh + 1) % 24).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+  const t = hh * 60 + mm + 45;
+  return `${String(Math.floor(t / 60) % 24).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 }
 
 export function RegistrationForm({
@@ -37,7 +39,7 @@ export function RegistrationForm({
   const [teacherId, setTeacherId] = useState("");
   const [weekday, setWeekday] = useState("1");
   const [startTime, setStartTime] = useState("15:00");
-  const [endTime, setEndTime] = useState("16:00");
+  const [endTime, setEndTime] = useState(addLessonLength("15:00"));
   const [busy, setBusy] = useState<BusySlot[]>([]);
   const [loadingBusy, startBusy] = useTransition();
 
@@ -61,7 +63,7 @@ export function RegistrationForm({
   const selectSlot = (wd: number, h: string) => {
     setWeekday(String(wd));
     setStartTime(h);
-    setEndTime(addHour(h));
+    setEndTime(addLessonLength(h));
   };
 
   return (
@@ -242,20 +244,15 @@ export function RegistrationForm({
               type="time"
               name="start_time"
               value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
+              onChange={(e) => {
+                setStartTime(e.target.value);
+                setEndTime(addLessonLength(e.target.value));
+              }}
               className="input"
             />
           </label>
-          <label className="label">
-            Bitiş
-            <input
-              type="time"
-              name="end_time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="input"
-            />
-          </label>
+          <input type="hidden" name="end_time" value={endTime} />
+          <span className="text-sm text-muted">— {endTime} (45 dk)</span>
         </div>
         <p className="text-xs text-muted">
           Girilen gün/saat için önümüzdeki 4 haftanın dersleri otomatik oluşturulur.
