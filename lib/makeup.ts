@@ -1,48 +1,81 @@
 import { createClient } from "@/lib/supabase/server";
 
-export type MakeupMiss = { date: string; start: string; end: string };
 export type MakeupPoolRow = {
   id: string;
   name: string;
-  credits: number;
+  remaining: number;
   teacherId: string | null;
   teacherName: string | null;
-  missed: MakeupMiss[];
+  autoRenew: boolean;
 };
 
-// Telafi havuzu: telafi hakkı (makeup_credits) > 0 olan öğrenciler.
-// Her öğrencinin altında "izinli" işaretlenen (giremediği) dersler: tarih + saat.
+// Telafi havuzu: kalan ders hakkı tam olarak 1 olan aktif öğrenciler.
+// used = İŞLENEN devir (geçiş ayında) + izinli hariç yoklamalar (paket kümülatif).
+// Kalan = monthly_quota − used. Yalnız kalan === 1 olanlar havuza girer.
 export async function getMakeupPool(branchId?: string): Promise<MakeupPoolRow[]> {
   const supabase = await createClient();
-  const { data: subs } = await supabase
-    .from("subscriptions")
-    .select("student_id, makeup_credits")
-    .gt("makeup_credits", 0);
-  let list = subs ?? [];
-  if (list.length === 0) return [];
+  const { data: profs } = await supabase
+    .from("profiles")
+    .select("id, full_name, username, teacher_id")
+    .eq("role", "student")
+    .eq("is_active", true);
+  let students = profs ?? [];
 
-  // İsteğe bağlı şube filtresi (kurum yöneticisi tek şube panelinde)
   if (branchId) {
     const { data: mems } = await supabase
       .from("branch_memberships")
       .select("user_id")
       .eq("branch_id", branchId)
       .eq("role", "student");
-    const inBranch = new Set((mems ?? []).map((m) => m.user_id));
-    list = list.filter((s) => inBranch.has(s.student_id));
-    if (list.length === 0) return [];
+    const set = new Set((mems ?? []).map((m) => m.user_id));
+    students = students.filter((s) => set.has(s.id));
+  }
+  if (students.length === 0) return [];
+
+  const ids = students.map((s) => s.id);
+  const now = new Date();
+  const curPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  const subByStudent = new Map<
+    string,
+    {
+      monthly_quota: number;
+      opening_used: number;
+      opening_period: string | null;
+      auto_renew: boolean;
+    }
+  >();
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("student_id, monthly_quota, opening_used, opening_period, auto_renew")
+      .in("student_id", ids.slice(i, i + 100));
+    (data ?? []).forEach((s) =>
+      subByStudent.set(s.student_id, {
+        monthly_quota: Number(s.monthly_quota ?? 0),
+        opening_used: Number(s.opening_used ?? 0),
+        opening_period: s.opening_period,
+        auto_renew: s.auto_renew ?? true,
+      }),
+    );
   }
 
-  const ids = list.map((s) => s.student_id);
-  const { data: profs } = await supabase
-    .from("profiles")
-    .select("id, full_name, username, teacher_id, role")
-    .in("id", ids);
-  const byId = new Map((profs ?? []).map((p) => [p.id, p]));
+  const attCount = new Map<string, number>();
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data } = await supabase
+      .from("attendance")
+      .select("student_id, status")
+      .in("student_id", ids.slice(i, i + 100))
+      .neq("status", "excused");
+    (data ?? []).forEach((a) =>
+      attCount.set(a.student_id, (attCount.get(a.student_id) ?? 0) + 1),
+    );
+  }
 
+  // Öğretmen adları
   const tids = [
     ...new Set(
-      (profs ?? []).map((p) => p.teacher_id).filter(Boolean) as string[],
+      students.map((s) => s.teacher_id).filter(Boolean) as string[],
     ),
   ];
   const tname = new Map<string, string>();
@@ -54,58 +87,23 @@ export async function getMakeupPool(branchId?: string): Promise<MakeupPoolRow[]>
     (data ?? []).forEach((t) => tname.set(t.id, t.full_name ?? t.username));
   }
 
-  // İzinli (excused) oturumlar → giremediği dersler
-  const missedByStudent = new Map<string, MakeupMiss[]>();
-  const { data: atts } = await supabase
-    .from("attendance")
-    .select("student_id, session_id, status")
-    .in("student_id", ids)
-    .eq("status", "excused");
-  const attList = atts ?? [];
-  if (attList.length > 0) {
-    const sessIds = [...new Set(attList.map((a) => a.session_id))];
-    const sessById = new Map<
-      string,
-      { date: string; start_time: string; end_time: string }
-    >();
-    for (let i = 0; i < sessIds.length; i += 100) {
-      const { data: sess } = await supabase
-        .from("sessions")
-        .select("id, date, start_time, end_time")
-        .in("id", sessIds.slice(i, i + 100));
-      (sess ?? []).forEach((s) =>
-        sessById.set(s.id, {
-          date: s.date,
-          start_time: s.start_time,
-          end_time: s.end_time,
-        }),
-      );
-    }
-    for (const a of attList) {
-      const s = sessById.get(a.session_id);
-      if (!s) continue;
-      const arr = missedByStudent.get(a.student_id) ?? [];
-      arr.push({ date: s.date, start: s.start_time, end: s.end_time });
-      missedByStudent.set(a.student_id, arr);
-    }
-  }
-
   const rows: MakeupPoolRow[] = [];
-  for (const s of list) {
-    const p = byId.get(s.student_id);
-    if (!p || p.role !== "student") continue;
-    const missed = (missedByStudent.get(s.student_id) ?? []).sort((a, b) =>
-      a.date < b.date ? 1 : a.date > b.date ? -1 : a.start.localeCompare(b.start),
-    );
+  for (const st of students) {
+    const sub = subByStudent.get(st.id);
+    if (!sub || !(sub.monthly_quota > 0)) continue;
+    const seed = sub.opening_period === curPeriod ? sub.opening_used : 0;
+    const used = seed + (attCount.get(st.id) ?? 0);
+    const remaining = sub.monthly_quota - used;
+    if (remaining !== 1) continue;
     rows.push({
-      id: p.id,
-      name: p.full_name ?? p.username,
-      credits: s.makeup_credits,
-      teacherId: p.teacher_id,
-      teacherName: p.teacher_id ? (tname.get(p.teacher_id) ?? null) : null,
-      missed,
+      id: st.id,
+      name: st.full_name ?? st.username,
+      remaining,
+      teacherId: st.teacher_id,
+      teacherName: st.teacher_id ? (tname.get(st.teacher_id) ?? null) : null,
+      autoRenew: sub.auto_renew,
     });
   }
-  rows.sort((a, b) => b.credits - a.credits || a.name.localeCompare(b.name, "tr"));
+  rows.sort((a, b) => a.name.localeCompare(b.name, "tr"));
   return rows;
 }

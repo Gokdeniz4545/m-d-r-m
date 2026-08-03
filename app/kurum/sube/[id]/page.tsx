@@ -7,8 +7,6 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { ActionCard } from "@/components/dashboard/action-card";
 import { getBranchStats } from "@/lib/dashboard-data";
 import { getMakeupPool } from "@/lib/makeup";
-import { getExpiringStudents } from "@/lib/renewal";
-import { ExpiringCard } from "@/components/expiring-card";
 
 export default async function KurumSubeDetay({
   params,
@@ -28,7 +26,6 @@ export default async function KurumSubeDetay({
 
   const stats = await getBranchStats([id]);
   const makeupPool = await getMakeupPool(id);
-  const expiring = await getExpiringStudents([id]);
 
   return (
     <PanelShell title={branch.name} profile={profile}>
@@ -67,15 +64,11 @@ export default async function KurumSubeDetay({
           value={makeupPool.length}
           sublabel={
             makeupPool.length > 0
-              ? "telafi bekleyen öğrenci · aç"
-              : "Telafi bekleyen yok"
+              ? "ders hakkı bitmek üzere · aç"
+              : "Bekleyen yok"
           }
           href={`/telafi?sube=${id}`}
         />
-      </div>
-
-      <div className="mt-6">
-        <ExpiringCard rows={expiring} />
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
