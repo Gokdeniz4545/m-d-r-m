@@ -38,6 +38,8 @@ const spanSlots = (start: string, end: string) => {
   for (let x = toMin(start); x < toMin(end); x += 15) res.push(hhmm(x));
   return res.length > 0 ? res : [start];
 };
+// Tüm dersler 45 dk; bitiş her zaman başlangıçtan otomatik hesaplanır.
+const addLessonLength = (start: string) => hhmm(toMin(start) + 45);
 
 const initial = { error: null as string | null, ok: false };
 
@@ -64,6 +66,7 @@ export function DayGrid({
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [editEnd, setEditEnd] = useState<string | null>(null);
   const [showEvent, setShowEvent] = useState(false);
   const [planState, planAction, planPending] = useActionState(planLesson, initial);
   const [evState, evAction, evPending] = useActionState(addCalendarEvent, initial);
@@ -157,7 +160,10 @@ export function DayGrid({
                         {canMark ? (
                           <button
                             type="button"
-                            onClick={() => setEditId(editId === sc.s.id ? null : sc.s.id)}
+                            onClick={() => {
+                              setEditId(editId === sc.s.id ? null : sc.s.id);
+                              setEditEnd(null);
+                            }}
                             className="shrink-0 text-xs font-medium text-primary hover:underline"
                           >
                             düzenle
@@ -175,33 +181,71 @@ export function DayGrid({
                       {canMark && editId === sc.s.id ? (
                         <div className="mt-2 flex flex-col gap-2 border-t border-border pt-2 text-xs">
                           {sc.s.slot_id ? (
-                            <form action={updateLesson} className="flex flex-wrap items-end gap-1.5">
-                              <input type="hidden" name="slotId" value={sc.s.slot_id} />
-                              <select name="weekday" defaultValue={weekday} className="input h-8 py-0 text-xs">
-                                {WEEKDAYS.map((d, i) => (
-                                  <option key={i} value={i + 1}>{d}</option>
-                                ))}
-                              </select>
-                              <input type="time" name="start_time" defaultValue={sc.s.start_time.slice(0, 5)} className="input h-8 w-24 py-0 text-xs" />
-                              <button className="btn-ghost h-8 py-0 text-xs">Rutin taşı</button>
-                            </form>
+                            <div>
+                              <p className="mb-1 text-[11px] text-muted">
+                                Rutin taşı — bu andan itibaren HER HAFTA geçerli olur.
+                              </p>
+                              <form action={updateLesson} className="flex flex-wrap items-end gap-1.5">
+                                <input type="hidden" name="slotId" value={sc.s.slot_id} />
+                                <select name="weekday" defaultValue={weekday} className="input h-8 py-0 text-xs">
+                                  {WEEKDAYS.map((d, i) => (
+                                    <option key={i} value={i + 1}>{d}</option>
+                                  ))}
+                                </select>
+                                <input
+                                  type="time"
+                                  name="start_time"
+                                  defaultValue={sc.s.start_time.slice(0, 5)}
+                                  onChange={(e) => setEditEnd(addLessonLength(e.target.value))}
+                                  className="input h-8 w-24 py-0 text-xs"
+                                />
+                                <span className="text-muted">
+                                  → biter: {editEnd ?? addLessonLength(sc.s.start_time.slice(0, 5))}
+                                </span>
+                                <button className="btn-ghost h-8 py-0 text-xs">Rutin taşı</button>
+                              </form>
+                            </div>
                           ) : null}
-                          <form action={moveSession} className="flex flex-wrap items-end gap-1.5">
-                            <input type="hidden" name="sessionId" value={sc.s.id} />
-                            <input type="date" name="date" defaultValue={date} className="input h-8 py-0 text-xs" />
-                            <input type="time" name="start_time" defaultValue={sc.s.start_time.slice(0, 5)} className="input h-8 w-24 py-0 text-xs" />
-                            <button className="btn-ghost h-8 py-0 text-xs">Bu haftayı taşı</button>
-                          </form>
+                          <div>
+                            <p className="mb-1 text-[11px] text-muted">
+                              Bu haftayı taşı — yalnızca bu tarihteki dersi taşır, diğer haftalar etkilenmez.
+                            </p>
+                            <form action={moveSession} className="flex flex-wrap items-end gap-1.5">
+                              <input type="hidden" name="sessionId" value={sc.s.id} />
+                              <input type="date" name="date" defaultValue={date} className="input h-8 py-0 text-xs" />
+                              <input
+                                type="time"
+                                name="start_time"
+                                defaultValue={sc.s.start_time.slice(0, 5)}
+                                onChange={(e) => setEditEnd(addLessonLength(e.target.value))}
+                                className="input h-8 w-24 py-0 text-xs"
+                              />
+                              <span className="text-muted">
+                                → biter: {editEnd ?? addLessonLength(sc.s.start_time.slice(0, 5))}
+                              </span>
+                              <button className="btn-ghost h-8 py-0 text-xs">Bu haftayı taşı</button>
+                            </form>
+                          </div>
                           <div className="flex gap-3">
                             {sc.s.slot_id ? (
                               <form action={deleteLesson}>
                                 <input type="hidden" name="slotId" value={sc.s.slot_id} />
-                                <button className="font-medium text-danger hover:underline">Dersi sil (haftalık)</button>
+                                <button
+                                  className="font-medium text-danger hover:underline"
+                                  title="Bu tarihten itibaren tüm gelecek haftaları siler"
+                                >
+                                  Dersi sil (haftalık)
+                                </button>
                               </form>
                             ) : null}
                             <form action={deleteSession}>
                               <input type="hidden" name="sessionId" value={sc.s.id} />
-                              <button className="font-medium text-danger hover:underline">Bu oturumu sil</button>
+                              <button
+                                className="font-medium text-danger hover:underline"
+                                title="Yalnızca bu tek oturumu siler, diğer haftalar kalır"
+                              >
+                                Bu oturumu sil
+                              </button>
                             </form>
                           </div>
                         </div>
