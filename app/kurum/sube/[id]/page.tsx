@@ -6,6 +6,8 @@ import { PanelShell } from "@/components/panel-shell";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ActionCard } from "@/components/dashboard/action-card";
 import { getBranchStats } from "@/lib/dashboard-data";
+import { getMakeupPool } from "@/lib/makeup";
+import { MakeupPoolCard } from "@/components/makeup-pool-card";
 
 export default async function KurumSubeDetay({
   params,
@@ -24,6 +26,7 @@ export default async function KurumSubeDetay({
   if (!branch) redirect("/kurum/subeler");
 
   const stats = await getBranchStats([id]);
+  const makeupPool = await getMakeupPool(id);
 
   return (
     <PanelShell title={branch.name} profile={profile}>
@@ -54,6 +57,10 @@ export default async function KurumSubeDetay({
           value={stats.newToday}
           href={`/kisiler?tip=yeni&sube=${id}`}
         />
+      </div>
+
+      <div className="mt-6">
+        <MakeupPoolCard pool={makeupPool} />
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
