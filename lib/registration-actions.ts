@@ -145,14 +145,24 @@ export async function registerStudent(
     { onConflict: "student_id" },
   );
 
-  // 2a) Kayıt anında borç: paket ücreti kadar (+). Alınan ödeme aşağıda ayrıca düşülür.
+  // 2a) Kayıt anında borç: yalnız PAKET modlu kurumlarda (otomatik aylık tahakkuk
+  // yok, borç manuel yazılmalı). Aylık modda bu ayın ücreti zaten otomatik
+  // tahakkuk ediyor (getStudentLedger dueExpected) — burada tekrar eklersek
+  // borç iki katına çıkar.
   if (fee > 0) {
-    await admin.from("adjustments").insert({
-      student_id: studentId,
-      amount: fee,
-      note: "Abonelik kaydı",
-      created_by: actor.id,
-    });
+    const { data: org } = await admin
+      .from("organizations")
+      .select("billing_mode")
+      .eq("id", actor.organization_id!)
+      .maybeSingle();
+    if (org?.billing_mode === "package") {
+      await admin.from("adjustments").insert({
+        student_id: studentId,
+        amount: fee,
+        note: "Abonelik kaydı",
+        created_by: actor.id,
+      });
+    }
   }
 
   // 2b) Kayıtta ödeme alındıysa kaydet

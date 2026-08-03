@@ -31,13 +31,28 @@ export async function renewSubscription(
     })
     .eq("student_id", studentId);
 
-  // Yenileme anında borç: ücret kadar (+).
+  // Yenileme anında borç: yalnız PAKET modlu kurumlarda (aylık modda bu ayın
+  // ücreti zaten otomatik tahakkuk ediyor — burada eklersek borç ikiye katlanır).
   if (fee > 0) {
-    await admin.from("adjustments").insert({
-      student_id: studentId,
-      amount: fee,
-      note: "Abonelik yenileme",
-      created_by: createdBy,
-    });
+    const { data: prof } = await admin
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", studentId)
+      .maybeSingle();
+    const { data: org } = prof?.organization_id
+      ? await admin
+          .from("organizations")
+          .select("billing_mode")
+          .eq("id", prof.organization_id)
+          .maybeSingle()
+      : { data: null };
+    if (org?.billing_mode === "package") {
+      await admin.from("adjustments").insert({
+        student_id: studentId,
+        amount: fee,
+        note: "Abonelik yenileme",
+        created_by: createdBy,
+      });
+    }
   }
 }
