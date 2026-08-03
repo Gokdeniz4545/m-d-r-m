@@ -52,12 +52,12 @@ export default async function KurumHome() {
 
       <div className="mt-4">
         <StatCard
-          label="Telafi Havuzu"
+          label="Aboneliği bitmek üzere"
           value={makeupPool.length}
           sublabel={
             makeupPool.length > 0
-              ? "telafi bekleyen öğrenci · aç"
-              : "Telafi bekleyen yok"
+              ? "ders hakkı bitmek üzere · aç"
+              : "Bekleyen yok"
           }
           href="/telafi"
           icon="takvim"

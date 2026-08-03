@@ -33,7 +33,7 @@ export default async function SubeHome() {
 
       <div className="mt-4">
         <StatCard
-          label="Telafi Havuzu"
+          label="Aboneliği bitmek üzere"
           value={makeupPool.length}
           sublabel={
             makeupPool.length > 0

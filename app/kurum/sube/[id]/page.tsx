@@ -60,7 +60,7 @@ export default async function KurumSubeDetay({
 
       <div className="mt-4">
         <StatCard
-          label="Telafi Havuzu"
+          label="Aboneliği bitmek üzere"
           value={makeupPool.length}
           sublabel={
             makeupPool.length > 0
