@@ -688,9 +688,11 @@ export default async function KisiProfil({
           <Section title="Abonelik & ödeme">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <div className="card p-4">
-              <div className="text-sm text-muted">{pkg ? "Paket ücreti" : "Aylık ücret"}</div>
-              <div className="mt-1 text-2xl font-bold">
-                {sub ? `${Number(sub.monthly_fee)} ₺` : "—"}
+              <div className="text-sm text-muted">Plan</div>
+              <div className="mt-1 text-xl font-bold">
+                {sub
+                  ? `${formatTRY(Number(sub.monthly_fee))} / ${quota} ders`
+                  : "—"}
               </div>
             </div>
             <div className="card p-4">

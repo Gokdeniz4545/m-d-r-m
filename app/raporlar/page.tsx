@@ -43,7 +43,7 @@ export default async function RaporlarPage({
 }: {
   searchParams: Promise<{ olcek?: string }>;
 }) {
-  const profile = await requireRole(["org_admin", "branch_admin"]);
+  const profile = await requireRole(["org_admin"]);
   const supabase = await createClient();
 
   const { olcek } = await searchParams;

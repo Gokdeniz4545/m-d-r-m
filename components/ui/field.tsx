@@ -1,3 +1,5 @@
+"use client";
+
 export function Field({
   label,
   name,
@@ -28,6 +30,9 @@ export function Field({
         defaultValue={defaultValue}
         placeholder={placeholder}
         inputMode={inputMode}
+        onWheel={(e) => {
+          if (e.currentTarget.type === "number") e.currentTarget.blur();
+        }}
         className="input"
       />
     </label>

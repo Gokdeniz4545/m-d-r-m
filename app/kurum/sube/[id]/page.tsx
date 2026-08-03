@@ -83,7 +83,6 @@ export default async function KurumSubeDetay({
           href="/ogrenci-ekle"
         />
         <ActionCard title="Takvim" description="Ders programı" href="/takvim" />
-        <ActionCard title="Raporlar" description="Ciro ve öğrenci grafikleri" href="/raporlar" />
       </div>
     </PanelShell>
   );

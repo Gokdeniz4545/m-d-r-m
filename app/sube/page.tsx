@@ -55,11 +55,6 @@ export default async function SubeHome() {
           description="Haftalık ders programı"
           href="/takvim"
         />
-        <ActionCard
-          title="Raporlar"
-          description="Aktif öğrenci ve ciro grafikleri"
-          href="/raporlar"
-        />
       </div>
     </PanelShell>
   );
