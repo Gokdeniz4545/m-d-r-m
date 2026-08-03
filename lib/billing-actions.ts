@@ -79,25 +79,22 @@ export async function recordPayment(
 
   const studentId = String(formData.get("studentId") ?? "");
   const amount = num(formData.get("amount"));
-  const period = String(formData.get("period") ?? "");
-  const paidAt = String(formData.get("paidAt") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim();
   const receivedBy = String(formData.get("receivedBy") ?? "").trim();
 
   if (!studentId) return { error: "Öğrenci yok.", ok: false };
   if (!(amount > 0)) return { error: "Geçerli tutar girin.", ok: false };
-  if (!/^\d{4}-\d{2}$/.test(period)) return { error: "Dönem (ay) seçin.", ok: false };
-  if (paidAt && !/^\d{4}-\d{2}-\d{2}$/.test(paidAt))
-    return { error: "Ödeme tarihi geçersiz.", ok: false };
+
+  // Ödeme tarihi/saati = anlık (değiştirilemez). Dönem = içinde bulunulan ay.
+  const now = new Date();
+  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   const supabase = await createClient();
   const { error } = await supabase.from("payments").insert({
     student_id: studentId,
     amount,
     period_month: period + "-01",
-    // Tam tarih girildiyse onu kullan (öğlen 12:00 → saat dilimi kaymasını önler),
-    // boşsa varsayılan now().
-    paid_at: paidAt ? paidAt + "T12:00:00" : undefined,
+    // paid_at atlanır → DB now() kullanır (anlık gün + saat).
     note: note || null,
     received_by: receivedBy || null,
   });

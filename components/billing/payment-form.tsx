@@ -11,14 +11,10 @@ const initial: State = { error: null, ok: false };
 export function PaymentForm({
   studentId,
   defaultAmount,
-  defaultPeriod,
-  defaultDate,
   defaultReceivedBy,
 }: {
   studentId: string;
   defaultAmount: string;
-  defaultPeriod: string;
-  defaultDate: string;
   defaultReceivedBy?: string;
 }) {
   const [state, action, pending] = useActionState(recordPayment, initial);
@@ -32,26 +28,6 @@ export function PaymentForm({
     <form ref={ref} action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="studentId" value={studentId} />
       <NumberField label="Tutar (₺)" name="amount" defaultValue={defaultAmount} />
-      <label className="label">
-        Ödeme tarihi
-        <input
-          type="date"
-          name="paidAt"
-          defaultValue={defaultDate}
-          required
-          className="input"
-        />
-      </label>
-      <label className="label">
-        Dönem (hangi ay)
-        <input
-          type="month"
-          name="period"
-          defaultValue={defaultPeriod}
-          required
-          className="input"
-        />
-      </label>
       <Field label="Not (isteğe bağlı)" name="note" />
       <Field
         label="Ödemeyi alan"

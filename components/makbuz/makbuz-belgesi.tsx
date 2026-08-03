@@ -103,10 +103,6 @@ export function MakbuzBelgesi({
           </div>
         </div>
       </div>
-
-      <p className="mt-8 text-center text-xs text-neutral-400">
-        Bu belge resmî fatura / e-belge değildir.
-      </p>
     </div>
   );
 }

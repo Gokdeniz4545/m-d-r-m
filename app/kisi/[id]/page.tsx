@@ -724,8 +724,6 @@ export default async function KisiProfil({
             <PaymentForm
               studentId={person.id}
               defaultAmount={sub ? String(Number(sub.monthly_fee)) : ""}
-              defaultPeriod={currentPeriod}
-              defaultDate={currentDate}
               defaultReceivedBy={viewer.full_name ?? viewer.username}
             />
           </Section>
