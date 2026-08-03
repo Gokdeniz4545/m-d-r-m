@@ -7,7 +7,6 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { ActionCard } from "@/components/dashboard/action-card";
 import { getBranchStats } from "@/lib/dashboard-data";
 import { getMakeupPool } from "@/lib/makeup";
-import { MakeupPoolCard } from "@/components/makeup-pool-card";
 
 export default async function KurumSubeDetay({
   params,
@@ -59,8 +58,17 @@ export default async function KurumSubeDetay({
         />
       </div>
 
-      <div className="mt-6">
-        <MakeupPoolCard pool={makeupPool} />
+      <div className="mt-4">
+        <StatCard
+          label="Telafi Havuzu"
+          value={makeupPool.length}
+          sublabel={
+            makeupPool.length > 0
+              ? "telafi bekleyen öğrenci · aç"
+              : "Telafi bekleyen yok"
+          }
+          href={`/telafi?sube=${id}`}
+        />
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
